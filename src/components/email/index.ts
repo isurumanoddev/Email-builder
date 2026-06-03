@@ -1,4 +1,6 @@
 // Export all email components
+export { EmailResponsiveHead } from './EmailResponsiveHead';
+
 export { Header } from './Header';
 export type { HeaderProps } from './Header';
 

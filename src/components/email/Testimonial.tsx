@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Img } from '@react-email/components';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 export interface TestimonialProps {
   quote: string;
@@ -40,15 +41,17 @@ export const Testimonial: React.FC<TestimonialProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >
       <tr>
-        <td align="center" valign="top" style={{ padding: deskPadding }}>
+        <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: deskPadding }}>
           <table
             width={520}
             cellPadding={0}
             cellSpacing={0}
+            className={EDM_CLASS.fluid}
             style={{
               width: '520px',
               backgroundColor: cardBackgroundColor,
@@ -69,10 +72,10 @@ export const Testimonial: React.FC<TestimonialProps> = ({
                   }}
                   dangerouslySetInnerHTML={{ __html: quote }}
                 />
-                <table cellPadding={0} cellSpacing={0} role="presentation">
+                <table cellPadding={0} cellSpacing={0} className={EDM_CLASS.stackRow} role="presentation">
                   <tr>
                     {avatarSrc && (
-                      <td valign="middle" style={{ paddingRight: '14px' }}>
+                      <td valign="middle" className={EDM_CLASS.stackCell} style={{ paddingRight: '14px' }}>
                         <Img
                           src={avatarSrc}
                           width={avatarWidth}
@@ -87,7 +90,7 @@ export const Testimonial: React.FC<TestimonialProps> = ({
                         />
                       </td>
                     )}
-                    <td valign="middle">
+                    <td valign="middle" className={EDM_CLASS.stackCell}>
                       <p
                         style={{
                           margin: 0,

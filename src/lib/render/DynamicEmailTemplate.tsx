@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { Html, Head, Body, Container, Preview } from '@react-email/components';
+import { Html, Body, Container, Preview } from '@react-email/components';
+import { EmailResponsiveHead } from '@/components/email/EmailResponsiveHead';
+import { EDM_CLASS } from '@/lib/email/responsive';
 import type { EmailTemplateMeta, TemplateBlock } from '@/lib/schema/template';
 import { DEFAULT_TEMPLATE_META } from '@/lib/schema/template';
 import { getComponentDefinition } from '@/lib/registry';
@@ -20,7 +22,7 @@ export function DynamicEmailTemplate({
 
   return (
     <Html>
-      <Head />
+      <EmailResponsiveHead />
       <Preview>{resolvedMeta.previewText}</Preview>
       <Body
         style={{
@@ -45,6 +47,7 @@ export function DynamicEmailTemplate({
                   width={600}
                   cellPadding={0}
                   cellSpacing={0}
+                  className={EDM_CLASS.wrapper}
                   style={{ width: '600px', backgroundColor: '#fee2e2' }}
                   role="presentation"
                 >

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Img, Link } from '@react-email/components';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 // ============================================================================
 // TYPES
@@ -115,10 +116,6 @@ const defaultStyles = {
   } as React.CSSProperties,
 };
 
-// ============================================================================
-// DEFAULT SOCIAL ICONS (base64 placeholder - replace with actual hosted icons)
-// ============================================================================
-
 const defaultSocialIcons: Record<string, string> = {
   facebook: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg',
   instagram: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg',
@@ -156,58 +153,50 @@ export const Footer: React.FC<FooterProps> = ({
   copyright,
   styles = {},
 }) => {
+  const logoImg = logoSrc ? (
+    <Img
+      src={logoSrc}
+      width={logoWidth}
+      alt={logoAlt}
+      className={EDM_CLASS.imgFluid}
+      style={{
+        display: 'block',
+        width: `${logoWidth}px`,
+        maxWidth: '100%',
+        height: 'auto',
+      }}
+    />
+  ) : null;
+
   return (
     <table
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{
         width: '600px',
         backgroundColor: backgroundColor,
       }}
       role="presentation"
     >
-      {/* Logo and Social Row */}
       <tr>
-        <td align="center" valign="top" style={{ padding: '30px 40px 24px 40px' }}>
-          <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
+        <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: '30px 40px 24px 40px' }}>
+          <table width="100%" cellPadding={0} cellSpacing={0} className={EDM_CLASS.fluid} role="presentation">
             <tr>
-              {/* Logo */}
-              <td align="left" valign="middle" style={{ width: '50%' }}>
-                {logoSrc && (
-                  <>
-                    {logoUrl ? (
-                      <Link href={logoUrl} style={{ textDecoration: 'none' }} target="_blank">
-                        <Img
-                          src={logoSrc}
-                          width={logoWidth}
-                          alt={logoAlt}
-                          style={{
-                            display: 'block',
-                            width: `${logoWidth}px`,
-                            height: 'auto',
-                          }}
-                        />
-                      </Link>
-                    ) : (
-                      <Img
-                        src={logoSrc}
-                        width={logoWidth}
-                        alt={logoAlt}
-                        style={{
-                          display: 'block',
-                          width: `${logoWidth}px`,
-                          height: 'auto',
-                        }}
-                      />
-                    )}
-                  </>
-                )}
+              <td align="left" valign="middle" className={EDM_CLASS.footerStack} style={{ width: '50%' }}>
+                {logoSrc &&
+                  (logoUrl ? (
+                    <Link href={logoUrl} style={{ textDecoration: 'none' }} target="_blank">
+                      {logoImg}
+                    </Link>
+                  ) : (
+                    logoImg
+                  ))}
               </td>
 
-              {/* Social Icons */}
-              <td align="right" valign="middle" style={{ width: '50%' }}>
-                <table cellPadding={0} cellSpacing={0} role="presentation">
+              <td align="right" valign="middle" className={EDM_CLASS.footerStack} style={{ width: '50%' }}>
+                <table cellPadding={0} cellSpacing={0} role="presentation" align="right" style={{ marginLeft: 'auto' }}>
                   {socialTitle && (
                     <tr>
                       <td
@@ -267,10 +256,9 @@ export const Footer: React.FC<FooterProps> = ({
         </td>
       </tr>
 
-      {/* Divider */}
       {showDivider && (
         <tr>
-          <td align="center" valign="top" style={{ padding: '0 40px' }}>
+          <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: '0 40px' }}>
             <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
               <tr>
                 <td
@@ -289,12 +277,12 @@ export const Footer: React.FC<FooterProps> = ({
         </tr>
       )}
 
-      {/* Legal Text */}
       {legalText && (
         <tr>
           <td
             align="left"
             valign="top"
+            className={EDM_CLASS.pad}
             style={{
               ...defaultStyles.legalText,
               ...styles.legalText,
@@ -304,12 +292,12 @@ export const Footer: React.FC<FooterProps> = ({
         </tr>
       )}
 
-      {/* Links Row */}
       {showLinks && (
         <tr>
           <td
             align="left"
             valign="top"
+            className={EDM_CLASS.pad}
             style={{
               ...defaultStyles.links,
               ...styles.links,
@@ -348,12 +336,12 @@ export const Footer: React.FC<FooterProps> = ({
         </tr>
       )}
 
-      {/* Address */}
       {address && (
         <tr>
           <td
             align="left"
             valign="top"
+            className={EDM_CLASS.pad}
             style={{
               ...defaultStyles.address,
               ...styles.address,
@@ -363,12 +351,12 @@ export const Footer: React.FC<FooterProps> = ({
         </tr>
       )}
 
-      {/* Phone */}
       {phone && (
         <tr>
           <td
             align="left"
             valign="top"
+            className={EDM_CLASS.pad}
             style={{
               ...defaultStyles.phone,
               ...styles.phone,
@@ -385,12 +373,12 @@ export const Footer: React.FC<FooterProps> = ({
         </tr>
       )}
 
-      {/* Copyright */}
       {copyright && (
         <tr>
           <td
             align="left"
             valign="top"
+            className={EDM_CLASS.pad}
             style={{
               ...defaultStyles.copyright,
               ...styles.copyright,
@@ -404,4 +392,3 @@ export const Footer: React.FC<FooterProps> = ({
 };
 
 export default Footer;
-

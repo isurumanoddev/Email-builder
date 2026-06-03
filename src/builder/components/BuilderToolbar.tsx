@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useBuilderStore } from '@/builder/store/builderStore';
+import { downloadBlob } from '@/builder/utils/download';
+import { sanitizeExportName } from '@/lib/export/sanitizeName';
 
 export function BuilderToolbar() {
   const router = useRouter();
@@ -16,6 +19,9 @@ export function BuilderToolbar() {
   const setShowAdvanced = useBuilderStore((s) => s.setShowAdvanced);
   const save = useBuilderStore((s) => s.save);
 
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
+
   const handleDuplicate = async () => {
     if (!template) return;
     const res = await fetch(`/api/templates/${template.id}/duplicate`, { method: 'POST' });
@@ -25,22 +31,62 @@ export function BuilderToolbar() {
     }
   };
 
-  const handleExportHtml = async () => {
-    if (!template) return;
-    const res = await fetch('/api/email/render', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ meta: template.meta, blocks: template.blocks }),
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    const blob = new Blob([data.html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${template.name.replace(/\s+/g, '-').toLowerCase()}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    if (!template || isExporting) return;
+
+    if (template.blocks.length === 0) {
+      alert('Add at least one component to the canvas before exporting.');
+      return;
+    }
+
+    setIsExporting(true);
+    setExportMessage(null);
+
+    try {
+      const res = await fetch('/api/email/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: template.name,
+          meta: template.meta,
+          blocks: template.blocks,
+        }),
+      });
+
+      const contentType = res.headers.get('Content-Type') ?? '';
+
+      if (!res.ok) {
+        const err =
+          contentType.includes('application/json')
+            ? await res.json().catch(() => ({}))
+            : {};
+        throw new Error(
+          typeof err.error === 'string' ? err.error : `Export failed (${res.status})`
+        );
+      }
+
+      if (!contentType.includes('application/zip')) {
+        throw new Error('Export did not return a ZIP file. Try again.');
+      }
+
+      const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error('Export file is empty. Try again.');
+      }
+
+      const disposition = res.headers.get('Content-Disposition') ?? '';
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] ?? `${sanitizeExportName(template.name)}.zip`;
+
+      downloadBlob(blob, filename);
+      setExportMessage('Exported');
+      window.setTimeout(() => setExportMessage(null), 3000);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Export failed';
+      alert(message);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -60,6 +106,7 @@ export function BuilderToolbar() {
         )}
         {isDirty && <span className="status-badge dirty">Unsaved</span>}
         {saveMessage && !isDirty && <span className="status-badge saved">{saveMessage}</span>}
+        {exportMessage && <span className="status-badge saved">{exportMessage}</span>}
         {saveError && <span className="status-badge error">{saveError}</span>}
       </div>
 
@@ -81,8 +128,18 @@ export function BuilderToolbar() {
         >
           Send email
         </a>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={handleExportHtml}>
-          Export HTML
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={handleExport}
+          disabled={isExporting || !template || template.blocks.length === 0}
+          title={
+            template && template.blocks.length === 0
+              ? 'Add components to the canvas first'
+              : 'Download ZIP with HTML and img folder'
+          }
+        >
+          {isExporting ? 'Exporting...' : 'Export'}
         </button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={handleDuplicate}>
           Duplicate
