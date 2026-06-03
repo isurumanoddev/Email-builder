@@ -42,5 +42,13 @@ export const renderTemplateRequestSchema = z.object({
   blocks: z.array(templateBlockSchema).min(1),
 });
 
+export const exportTemplateRequestSchema = z.object({
+  name: z.string().min(1).optional(),
+  meta: emailTemplateMetaSchema.optional(),
+  blocks: z.array(templateBlockSchema).optional(),
+  templateId: z.string().min(1).optional(),
+});
+
 export type RenderTemplateRequest = z.infer<typeof renderTemplateRequestSchema>;
+export type ExportTemplateRequest = z.infer<typeof exportTemplateRequestSchema>;
 export type EmailTemplateDocumentInput = z.infer<typeof emailTemplateDocumentSchema>;
