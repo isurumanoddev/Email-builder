@@ -1,0 +1,46 @@
+import { z } from 'zod';
+import { SCHEMA_VERSION } from './template';
+
+export const templateCategorySchema = z.enum([
+  'promotional',
+  'newsletter',
+  'transactional',
+  'product-showcase',
+  'layout',
+]);
+
+export const emailTemplateMetaSchema = z.object({
+  previewText: z.string().min(1),
+  backgroundColor: z.string().min(1),
+  containerWidth: z.number().int().positive().default(600),
+});
+
+export const templateBlockSchema = z.object({
+  id: z.string().min(1),
+  componentId: z.string().min(1),
+  componentVersion: z.number().int().positive(),
+  props: z.record(z.unknown()),
+  label: z.string().optional(),
+});
+
+export const emailTemplateDocumentSchema = z.object({
+  schemaVersion: z.literal(SCHEMA_VERSION),
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  category: templateCategorySchema,
+  tags: z.array(z.string()).optional(),
+  meta: emailTemplateMetaSchema,
+  blocks: z.array(templateBlockSchema),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1),
+  duplicatedFrom: z.string().optional(),
+});
+
+export const renderTemplateRequestSchema = z.object({
+  meta: emailTemplateMetaSchema.optional(),
+  blocks: z.array(templateBlockSchema).min(1),
+});
+
+export type RenderTemplateRequest = z.infer<typeof renderTemplateRequestSchema>;
+export type EmailTemplateDocumentInput = z.infer<typeof emailTemplateDocumentSchema>;

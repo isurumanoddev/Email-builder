@@ -1,0 +1,35 @@
+{
+  "name": "react-email-nextjs",
+  "version": "1.0.0",
+  "description": "Next.js app with React Email components",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "email:dev": "email dev --dir src/emails --port 3005",
+    "email:export": "email export --dir src/emails --outDir out/emails",
+    "seed:templates": "npx tsx scripts/seed-templates.ts",
+    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@react-email/components": "0.0.31",
+    "@react-email/render": "^1.0.4",
+    "next": "^14.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-email": "^3.0.4",
+    "zod": "^3.23.8",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0"
+  }
+}

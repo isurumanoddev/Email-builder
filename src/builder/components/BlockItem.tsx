@@ -1,0 +1,71 @@
+'use client';
+
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { TemplateBlock } from '@/lib/schema/template';
+import { useBuilderStore } from '@/builder/store/builderStore';
+
+interface BlockItemProps {
+  block: TemplateBlock;
+  componentName: string;
+}
+
+export function BlockItem({ block, componentName }: BlockItemProps) {
+  const selectedBlockId = useBuilderStore((s) => s.selectedBlockId);
+  const selectBlock = useBuilderStore((s) => s.selectBlock);
+  const removeBlock = useBuilderStore((s) => s.removeBlock);
+  const duplicateBlock = useBuilderStore((s) => s.duplicateBlock);
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: block.id,
+    data: { type: 'block', blockId: block.id },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isSelected = selectedBlockId === block.id;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`block-item ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      onClick={() => selectBlock(block.id)}
+    >
+      <span className="block-drag-handle" {...attributes} {...listeners}>
+        ⠿
+      </span>
+      <div className="block-info">
+        <div className="block-name">{block.label ?? componentName}</div>
+        <div className="block-type">{componentName}</div>
+      </div>
+      <div className="block-actions">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            duplicateBlock(block.id);
+          }}
+          title="Duplicate"
+        >
+          ⧉
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm btn-danger"
+          onClick={(e) => {
+            e.stopPropagation();
+            removeBlock(block.id);
+          }}
+          title="Remove"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}

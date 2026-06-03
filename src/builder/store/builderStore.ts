@@ -1,0 +1,232 @@
+import { create } from 'zustand';
+import type { EmailTemplateDocument, EmailTemplateMeta, TemplateBlock } from '@/lib/schema/template';
+import type { ComponentRegistryEntry } from '@/lib/registry/types';
+import { generateId } from '@/lib/utils/id';
+import { setNestedValue } from '@/builder/utils/props';
+
+interface BuilderState {
+  template: EmailTemplateDocument | null;
+  registry: ComponentRegistryEntry[];
+  registryByCategory: Record<string, ComponentRegistryEntry[]>;
+  selectedBlockId: string | null;
+  isDirty: boolean;
+  isSaving: boolean;
+  isLoading: boolean;
+  showAdvanced: boolean;
+  viewMode: 'desktop' | 'mobile';
+  saveError: string | null;
+  saveMessage: string | null;
+
+  setTemplate: (template: EmailTemplateDocument) => void;
+  loadRegistry: () => Promise<void>;
+  loadTemplate: (id: string) => Promise<void>;
+  selectBlock: (id: string | null) => void;
+  addBlock: (componentId: string, index?: number) => void;
+  removeBlock: (id: string) => void;
+  duplicateBlock: (id: string) => void;
+  reorderBlocks: (activeId: string, overId: string) => void;
+  updateBlockProp: (blockId: string, key: string, value: unknown) => void;
+  updateMeta: (meta: Partial<EmailTemplateMeta>) => void;
+  updateTemplateInfo: (
+    info: Partial<Pick<EmailTemplateDocument, 'name' | 'description' | 'category'>>
+  ) => void;
+  setShowAdvanced: (show: boolean) => void;
+  setViewMode: (mode: 'desktop' | 'mobile') => void;
+  save: () => Promise<boolean>;
+  resetDirty: () => void;
+}
+
+function markDirty(
+  state: Pick<BuilderState, 'template'>,
+  patch: Partial<EmailTemplateDocument>
+): Partial<BuilderState> {
+  if (!state.template) return {};
+  return {
+    template: { ...state.template, ...patch },
+    isDirty: true,
+    saveMessage: null,
+    saveError: null,
+  };
+}
+
+export const useBuilderStore = create<BuilderState>((set, get) => ({
+  template: null,
+  registry: [],
+  registryByCategory: {},
+  selectedBlockId: null,
+  isDirty: false,
+  isSaving: false,
+  isLoading: false,
+  showAdvanced: false,
+  viewMode: 'desktop',
+  saveError: null,
+  saveMessage: null,
+
+  setTemplate: (template) =>
+    set({ template, isDirty: false, selectedBlockId: null, saveError: null, saveMessage: null }),
+
+  loadRegistry: async () => {
+    const res = await fetch('/api/registry');
+    if (!res.ok) throw new Error('Failed to load component registry');
+    const data = await res.json();
+    set({ registry: data.components, registryByCategory: data.byCategory });
+  },
+
+  loadTemplate: async (id: string) => {
+    set({ isLoading: true, saveError: null });
+    try {
+      const res = await fetch(`/api/templates/${id}`);
+      if (!res.ok) throw new Error('Template not found');
+      const data = await res.json();
+      set({
+        template: data.template,
+        isDirty: false,
+        isLoading: false,
+        selectedBlockId: null,
+      });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  selectBlock: (id) => set({ selectedBlockId: id }),
+
+  addBlock: (componentId, index) => {
+    const { registry, template } = get();
+    if (!template) return;
+
+    const entry = registry.find((c) => c.id === componentId);
+    if (!entry) return;
+
+    const block: TemplateBlock = {
+      id: generateId(),
+      componentId: entry.id,
+      componentVersion: entry.version,
+      props: structuredClone(entry.defaultProps),
+      label: entry.name,
+    };
+
+    const blocks = [...template.blocks];
+    const insertAt = index ?? blocks.length;
+    blocks.splice(insertAt, 0, block);
+
+    set({
+      ...markDirty(get(), { blocks }),
+      selectedBlockId: block.id,
+    });
+  },
+
+  removeBlock: (id) => {
+    const { template, selectedBlockId } = get();
+    if (!template) return;
+
+    const blocks = template.blocks.filter((b) => b.id !== id);
+    set({
+      ...markDirty(get(), { blocks }),
+      selectedBlockId: selectedBlockId === id ? null : selectedBlockId,
+    });
+  },
+
+  duplicateBlock: (id) => {
+    const { template } = get();
+    if (!template) return;
+
+    const index = template.blocks.findIndex((b) => b.id === id);
+    if (index === -1) return;
+
+    const source = template.blocks[index];
+    const copy: TemplateBlock = {
+      ...structuredClone(source),
+      id: generateId(),
+      label: `${source.label ?? source.componentId} (Copy)`,
+    };
+
+    const blocks = [...template.blocks];
+    blocks.splice(index + 1, 0, copy);
+
+    set({
+      ...markDirty(get(), { blocks }),
+      selectedBlockId: copy.id,
+    });
+  },
+
+  reorderBlocks: (activeId, overId) => {
+    const { template } = get();
+    if (!template || activeId === overId) return;
+
+    const oldIndex = template.blocks.findIndex((b) => b.id === activeId);
+    const newIndex = template.blocks.findIndex((b) => b.id === overId);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const blocks = [...template.blocks];
+    const [moved] = blocks.splice(oldIndex, 1);
+    blocks.splice(newIndex, 0, moved);
+
+    set(markDirty(get(), { blocks }));
+  },
+
+  updateBlockProp: (blockId, key, value) => {
+    const { template } = get();
+    if (!template) return;
+
+    const blocks = template.blocks.map((block) => {
+      if (block.id !== blockId) return block;
+      return {
+        ...block,
+        props: setNestedValue(block.props, key, value),
+      };
+    });
+
+    set(markDirty(get(), { blocks }));
+  },
+
+  updateMeta: (meta) => {
+    const { template } = get();
+    if (!template) return;
+    set(markDirty(get(), { meta: { ...template.meta, ...meta } }));
+  },
+
+  updateTemplateInfo: (info) => {
+    set(markDirty(get(), info));
+  },
+
+  setShowAdvanced: (show) => set({ showAdvanced: show }),
+  setViewMode: (mode) => set({ viewMode: mode }),
+  resetDirty: () => set({ isDirty: false }),
+
+  save: async () => {
+    const { template } = get();
+    if (!template) return false;
+
+    set({ isSaving: true, saveError: null, saveMessage: null });
+
+    try {
+      const res = await fetch(`/api/templates/${template.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(template),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Save failed');
+      }
+
+      const data = await res.json();
+      set({
+        template: data.template,
+        isDirty: false,
+        isSaving: false,
+        saveMessage: 'Saved successfully',
+      });
+      return true;
+    } catch (error) {
+      set({
+        isSaving: false,
+        saveError: error instanceof Error ? error.message : 'Save failed',
+      });
+      return false;
+    }
+  },
+}));

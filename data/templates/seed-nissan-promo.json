@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "id": "seed-nissan-promo",
+  "name": "Nissan Promo Newsletter",
+  "description": "Nissan MORE campaign with real vehicle images from public/images",
+  "category": "promotional",
+  "tags": ["nissan", "seed", "promotional"],
+  "meta": {
+    "previewText": "Discover Nissan MORE - Up to 10 Years of Warranty on Selected Models",
+    "backgroundColor": "#e5e5e5",
+    "containerWidth": 600
+  },
+  "blocks": [
+    {
+      "id": "blk-header-001",
+      "componentId": "header",
+      "componentVersion": 1,
+      "label": "Header",
+      "props": {
+        "logoSrc": "/images/preview-928x522.jpg",
+        "logoWidth": 280,
+        "logoAlt": "Nissan Motor Corporation",
+        "logoUrl": "https://www.nissan.com",
+        "backgroundColor": "#ffffff",
+        "deskPadding": "30px 40px"
+      }
+    },
+    {
+      "id": "blk-promo-001",
+      "componentId": "promo-block",
+      "componentVersion": 1,
+      "label": "Nissan MORE Banner",
+      "props": {
+        "imgSrc": "/images/10-year-warranty_hp_%C2%B0%C2%B0.png.ximg.l_full_m.smart.png",
+        "imgWidth": 520,
+        "altText": "Nissan MORE - Up to 10 Years of Warranty",
+        "title": "Nissan MORE",
+        "subtitle": "Up to <strong>10 years of warranty</strong> on selected models.",
+        "ctaText": "LEARN MORE",
+        "ctaUrl": "https://www.nissan.com/more",
+        "backgroundColor": "#000000",
+        "cardBackgroundColor": "#000000"
+      }
+    },
+    {
+      "id": "blk-intro-001",
+      "componentId": "intro-copy",
+      "componentVersion": 1,
+      "label": "Intro Copy",
+      "props": {
+        "greeting": "Dear Valued Customer,",
+        "body": "Experience the ultimate peace of mind with <strong>Nissan MORE</strong>. For a limited time, enjoy up to <strong>10 years of warranty</strong> on selected Nissan models. Discover our range of innovative vehicles designed to exceed your expectations.",
+        "backgroundColor": "#ffffff",
+        "deskPadding": "30px 40px 20px 40px",
+        "textAlign": "left"
+      }
+    },
+    {
+      "id": "blk-section-001",
+      "componentId": "section-title",
+      "componentVersion": 1,
+      "label": "Section Title",
+      "props": {
+        "title": "Our Featured Vehicles",
+        "backgroundColor": "#f5f5f5",
+        "textAlign": "center"
+      }
+    },
+    {
+      "id": "blk-dual-cta-001",
+      "componentId": "two-col-dual-cta",
+      "componentVersion": 1,
+      "label": "Qashqai & Patrol",
+      "props": {
+        "backgroundColor": "#f5f5f5",
+        "deskPadding": "10px 40px 20px 40px",
+        "gutterWidth": 20,
+        "textAlign": "center",
+        "rows": [
+          {
+            "product1": {
+              "headerTitle": "All-New Qashqai",
+              "headerSubtitle": "CROSSOVER",
+              "imgSrc": "/images/QQ%20ST.png",
+              "imgWidth": 250,
+              "altText": "Nissan Qashqai",
+              "url": "https://www.nissan.com/qashqai",
+              "labelText": "FROM AUD 89,900",
+              "title": "Nissan Qashqai",
+              "subtitle": "Bold design meets smart technology",
+              "cta1Text": "REQUEST A QUOTE",
+              "cta2Text": "BOOK TEST DRIVE",
+              "backgroundColor": "#ffffff",
+              "width": 250
+            },
+            "product2": {
+              "headerTitle": "Patrol",
+              "headerSubtitle": "FULL-SIZE SUV",
+              "imgSrc": "/images/Ti%20Patrol.png",
+              "imgWidth": 250,
+              "altText": "Nissan Patrol",
+              "url": "https://www.nissan.com/patrol",
+              "labelText": "FROM AUD 199,900",
+              "title": "Nissan Patrol",
+              "subtitle": "Legendary power and luxury",
+              "cta1Text": "REQUEST A QUOTE",
+              "cta2Text": "BOOK TEST DRIVE",
+              "backgroundColor": "#ffffff",
+              "width": 250
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "blk-stacked-001",
+      "componentId": "two-col-stacked",
+      "componentVersion": 1,
+      "label": "Ariya & X-Trail",
+      "props": {
+        "backgroundColor": "#f5f5f5",
+        "deskPadding": "10px 40px 30px 40px",
+        "gutterWidth": 20,
+        "rows": [
+          {
+            "product1": {
+              "deskImgSrc": "/images/63kWh-ENGAGE.png",
+              "imgWidth": 250,
+              "altText": "Nissan Ariya",
+              "url": "https://www.nissan.com/ariya",
+              "title": "Nissan Ariya",
+              "subtitle": "100% Electric. 100% Nissan.",
+              "price": "From AUD 179,900",
+              "ctaText": "EXPLORE NOW",
+              "backgroundColor": "#ffffff",
+              "width": 250
+            },
+            "product2": {
+              "deskImgSrc": "/images/XT2PAST25_TCJARBWT33EMA-----.png",
+              "imgWidth": 250,
+              "altText": "Nissan X-Trail",
+              "url": "https://www.nissan.com/xtrail",
+              "title": "Nissan X-Trail",
+              "subtitle": "Adventure-ready family SUV",
+              "price": "From AUD 119,900",
+              "ctaText": "EXPLORE NOW",
+              "backgroundColor": "#ffffff",
+              "width": 250
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "blk-onecol-001",
+      "componentId": "one-col-product",
+      "componentVersion": 1,
+      "label": "Featured Patrol",
+      "props": {
+        "backgroundColor": "#f5f5f5",
+        "contentWidth": 520,
+        "contentAlign": "center",
+        "textAlign": "center",
+        "rows": [
+          {
+            "deskImgSrc": "/images/Ti%20Patrol.png",
+            "imgWidth": 520,
+            "altText": "Nissan Patrol Ti",
+            "url": "https://www.nissan.com/patrol",
+            "productTitle": "Nissan Patrol Ti",
+            "productSubtitle": "The legendary Patrol combines commanding presence with refined luxury.",
+            "productPrice": "From AUD 199,900",
+            "showButton": true,
+            "ctaText": "CONFIGURE YOURS",
+            "ctaUrl": "https://www.nissan.com/patrol/configure",
+            "width": 520,
+            "backgroundColor": "#ffffff"
+          }
+        ]
+      }
+    },
+    {
+      "id": "blk-cta-001",
+      "componentId": "cta-banner",
+      "componentVersion": 1,
+      "label": "CTA Banner",
+      "props": {
+        "headline": "Find Your Perfect Nissan",
+        "subtext": "Visit your nearest showroom or book a test drive today",
+        "buttonText": "Find a Dealer",
+        "buttonUrl": "https://www.nissan.com/find-dealer",
+        "backgroundColor": "#000000"
+      }
+    },
+    {
+      "id": "blk-footer-001",
+      "componentId": "footer",
+      "componentVersion": 1,
+      "label": "Footer",
+      "props": {
+        "backgroundColor": "#1a1a1a",
+        "logoSrc": "/images/preview-928x522.jpg",
+        "logoWidth": 160,
+        "logoAlt": "Nissan",
+        "logoUrl": "https://www.nissan.com",
+        "socialTitle": "Connect with us",
+        "socialLinks": [
+          {
+            "platform": "facebook",
+            "url": "https://facebook.com/nissan",
+            "iconUrl": "https://placehold.co/28x28/ffffff/1a1a1a?text=f"
+          },
+          {
+            "platform": "instagram",
+            "url": "https://instagram.com/nissan",
+            "iconUrl": "https://placehold.co/28x28/ffffff/1a1a1a?text=ig"
+          }
+        ],
+        "showDivider": true,
+        "legalText": "Nissan MORE warranty offer valid on selected models. Terms and conditions apply.",
+        "showLinks": true,
+        "preferencesUrl": "https://www.nissan.com/preferences",
+        "unsubscribeUrl": "https://www.nissan.com/unsubscribe",
+        "privacyUrl": "https://www.nissan.com/privacy",
+        "copyright": "© 2026 Nissan Motor Corporation. All rights reserved."
+      }
+    }
+  ],
+  "createdAt": "2026-06-01T00:00:00.000Z",
+  "updatedAt": "2026-06-01T00:00:00.000Z"
+}

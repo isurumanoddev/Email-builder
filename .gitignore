@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.email-starter/node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Build / compile
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Deploy
+.vercel
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# TypeScript / tooling cache
+.turbo
+.eslintcache

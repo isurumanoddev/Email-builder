@@ -1,0 +1,62 @@
+'use client';
+
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import type { ComponentRegistryEntry } from '@/lib/registry/types';
+import { formatCategoryLabel } from '@/builder/utils/props';
+import { useBuilderStore } from '@/builder/store/builderStore';
+
+function PaletteItem({ entry }: { entry: ComponentRegistryEntry }) {
+  const addBlock = useBuilderStore((s) => s.addBlock);
+  const dragId = `palette-${entry.id}`;
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: dragId,
+    data: { type: 'palette', componentId: entry.id },
+  });
+
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="palette-item"
+      {...listeners}
+      {...attributes}
+      onDoubleClick={() => addBlock(entry.id)}
+      title="Drag to canvas or double-click to add"
+    >
+      <span className="palette-item-name">{entry.name}</span>
+      <span className="palette-item-desc">{entry.description}</span>
+    </div>
+  );
+}
+
+export function ComponentPalette() {
+  const registryByCategory = useBuilderStore((s) => s.registryByCategory);
+
+  const categories = Object.keys(registryByCategory).sort();
+
+  return (
+    <aside className="builder-panel">
+      <div className="builder-panel-header">Components</div>
+      <div className="builder-panel-body">
+        {categories.length === 0 ? (
+          <div className="props-empty">Loading components...</div>
+        ) : (
+          categories.map((category) => (
+            <div key={category} className="palette-category">
+              <div className="palette-category-title">{formatCategoryLabel(category)}</div>
+              {registryByCategory[category].map((entry) => (
+                <PaletteItem key={entry.id} entry={entry} />
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+    </aside>
+  );
+}
