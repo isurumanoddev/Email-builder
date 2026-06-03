@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 // ============================================================================
 // TYPES
@@ -67,6 +68,7 @@ export const IntroCopy: React.FC<IntroCopyProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{
         width: '600px',
         backgroundColor: backgroundColor,
@@ -77,6 +79,7 @@ export const IntroCopy: React.FC<IntroCopyProps> = ({
         <td
           align={textAlign}
           valign="top"
+          className={EDM_CLASS.pad}
           style={{
             padding: deskPadding,
             ...defaultStyles.container,

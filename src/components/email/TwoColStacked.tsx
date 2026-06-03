@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Img, Link } from '@react-email/components';
+import { EDM_CLASS, fluidImgStyle } from '@/lib/email/responsive';
 
 // ============================================================================
 // TYPES
@@ -132,6 +133,8 @@ const defaultStyles = {
     border: '1px solid #000000',
     borderRadius: '4px',
     width: '218px',
+    maxWidth: '100%',
+    boxSizing: 'border-box' as const,
   } as React.CSSProperties,
 };
 
@@ -147,12 +150,13 @@ const SingleImageRow: React.FC<{
 
   return (
     <tr>
-      <td align="left" valign="top" style={{ padding: '0 0 10px' }}>
+      <td align="center" valign="top" style={{ padding: '0 0 10px' }}>
         <table
           width={width}
           cellPadding={0}
           cellSpacing={0}
-          align="left"
+          align="center"
+          className={`${EDM_CLASS.fluid} ${EDM_CLASS.colDrop}`}
           style={{ width: `${width}px`, backgroundColor }}
           role="presentation"
         >
@@ -164,11 +168,10 @@ const SingleImageRow: React.FC<{
                     src={row.desktopImgSrc || ''}
                     width={width}
                     alt={row.altText || ''}
-                    style={{
-                      width: `${width}px`,
+                    className={EDM_CLASS.imgFluid}
+                    style={fluidImgStyle(width, {
                       height: row.height ? `${row.height}px` : 'auto',
-                      display: 'block',
-                    }}
+                    })}
                   />
                 </Link>
               ) : (
@@ -176,11 +179,10 @@ const SingleImageRow: React.FC<{
                   src={row.desktopImgSrc || ''}
                   width={width}
                   alt={row.altText || ''}
-                  style={{
-                    width: `${width}px`,
+                  className={EDM_CLASS.imgFluid}
+                  style={fluidImgStyle(width, {
                     height: row.height ? `${row.height}px` : 'auto',
-                    display: 'block',
-                  }}
+                  })}
                 />
               )}
             </td>
@@ -202,6 +204,7 @@ const ProductColumn: React.FC<{
 }> = ({ product, align, styles = {} }) => {
   const bgColor = product.backgroundColor || '#ffffff';
   const width = product.width || 250;
+  const imgWidth = product.imgWidth || width;
 
   return (
     <table
@@ -209,6 +212,7 @@ const ProductColumn: React.FC<{
       cellPadding={0}
       cellSpacing={0}
       align={align}
+      className={EDM_CLASS.colDrop}
       style={{
         width: `${width}px`,
         float: align,
@@ -216,7 +220,6 @@ const ProductColumn: React.FC<{
       }}
       role="presentation"
     >
-      {/* Product Image */}
       <tr>
         <td
           align="center"
@@ -234,40 +237,30 @@ const ProductColumn: React.FC<{
             >
               <Img
                 src={product.deskImgSrc || ''}
-                width={product.imgWidth || width}
+                width={imgWidth}
                 alt={product.altText || ''}
-                style={{
-                  display: 'block',
-                  width: `${product.imgWidth || width}px`,
-                  height: 'auto',
-                  borderRadius: product.imgBorderRadius,
-                }}
+                className={EDM_CLASS.imgFluid}
+                style={fluidImgStyle(imgWidth, { borderRadius: product.imgBorderRadius })}
               />
             </Link>
           ) : (
             <Img
               src={product.deskImgSrc || ''}
-              width={product.imgWidth || width}
+              width={imgWidth}
               alt={product.altText || ''}
-              style={{
-                display: 'block',
-                width: `${product.imgWidth || width}px`,
-                height: 'auto',
-                borderRadius: product.imgBorderRadius,
-              }}
+              className={EDM_CLASS.imgFluid}
+              style={fluidImgStyle(imgWidth, { borderRadius: product.imgBorderRadius })}
             />
           )}
         </td>
       </tr>
 
-      {/* Title */}
       {product.title && (
         <tr>
           <td
             align="left"
             valign="top"
             style={{
-              width: `${width}px`,
               backgroundColor: bgColor,
               ...defaultStyles.title,
               ...styles.title,
@@ -288,14 +281,12 @@ const ProductColumn: React.FC<{
         </tr>
       )}
 
-      {/* Subtitle */}
       {product.title && product.subtitle && (
         <tr>
           <td
             align="left"
             valign="top"
             style={{
-              width: `${width}px`,
               backgroundColor: bgColor,
               ...defaultStyles.subtitle,
               ...styles.subtitle,
@@ -306,14 +297,12 @@ const ProductColumn: React.FC<{
         </tr>
       )}
 
-      {/* Price */}
       {product.price && (
         <tr>
           <td
             align="left"
             valign="top"
             style={{
-              width: `${width}px`,
               backgroundColor: bgColor,
               ...defaultStyles.price,
               ...styles.price,
@@ -334,11 +323,10 @@ const ProductColumn: React.FC<{
         </tr>
       )}
 
-      {/* CTA Button */}
       {product.price && !product.hideCta && (
         <tr>
           <td
-            align="left"
+            align="center"
             valign="top"
             style={{
               backgroundColor: bgColor,
@@ -347,6 +335,7 @@ const ProductColumn: React.FC<{
           >
             <Link
               href={product.ctaUrl || product.url || '#'}
+              className={EDM_CLASS.cta}
               style={{
                 ...defaultStyles.cta,
                 ...styles.cta,
@@ -377,39 +366,34 @@ const TwoColumnRow: React.FC<{
         <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
           <tr>
             <td align="left" valign="top">
-              {/* Left Product */}
               {row.product1 && (
-                <ProductColumn
-                  product={row.product1}
-                  align="left"
-                  styles={styles}
-                />
+                <ProductColumn product={row.product1} align="left" styles={styles} />
               )}
 
-              {/* Spacer between columns */}
               <table
                 width={gutterWidth}
                 cellPadding={0}
                 cellSpacing={0}
                 align="left"
+                className={EDM_CLASS.colHide}
                 style={{ width: `${gutterWidth}px` }}
                 role="presentation"
               >
                 <tr>
-                  <td width={gutterWidth} style={{ width: `${gutterWidth}px` }}>
+                  <td width={gutterWidth} style={{ width: `${gutterWidth}px`, fontSize: '0px', lineHeight: '0px' }}>
                     &nbsp;
                   </td>
                 </tr>
               </table>
 
-              {/* Right Product */}
               {row.product2 && (
-                <ProductColumn
-                  product={row.product2}
-                  align="right"
-                  styles={styles}
-                />
+                <ProductColumn product={row.product2} align="right" styles={styles} />
               )}
+            </td>
+          </tr>
+          <tr>
+            <td className={EDM_CLASS.clearfix} style={{ fontSize: '0px', lineHeight: '0px' }}>
+              &nbsp;
             </td>
           </tr>
         </table>
@@ -434,6 +418,7 @@ export const TwoColStacked: React.FC<TwoColStackedProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{
         width: '600px',
         backgroundColor: backgroundColor,
@@ -441,8 +426,14 @@ export const TwoColStacked: React.FC<TwoColStackedProps> = ({
       role="presentation"
     >
       <tr>
-        <td align="center" valign="top" style={{ padding: deskPadding }}>
-          <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
+        <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: deskPadding }}>
+          <table
+            width="100%"
+            cellPadding={0}
+            cellSpacing={0}
+            className={EDM_CLASS.fluid}
+            role="presentation"
+          >
             {rows.map((row, index) =>
               row.singleImage ? (
                 <SingleImageRow
@@ -467,4 +458,3 @@ export const TwoColStacked: React.FC<TwoColStackedProps> = ({
 };
 
 export default TwoColStacked;
-

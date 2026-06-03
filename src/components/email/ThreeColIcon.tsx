@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Img, Link } from '@react-email/components';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 // ============================================================================
 // TYPES
@@ -93,6 +94,7 @@ const IconColumn: React.FC<{
       cellPadding={0}
       cellSpacing={0}
       align="left"
+      className={EDM_CLASS.colDrop}
       style={{
         width: `${width}px`,
         float: 'left',
@@ -100,7 +102,6 @@ const IconColumn: React.FC<{
       }}
       role="presentation"
     >
-      {/* Icon */}
       <tr>
         <td
           align={column.iconAlign || 'left'}
@@ -140,13 +141,13 @@ const IconColumn: React.FC<{
         </td>
       </tr>
 
-      {/* Text Content */}
       <tr>
         <td
           align="left"
           valign="top"
+          className={EDM_CLASS.stackCell}
           style={{
-            height: `${textHeight}px`,
+            minHeight: `${textHeight}px`,
             backgroundColor: bgColor,
             ...defaultStyles.text,
             ...styles.text,
@@ -158,6 +159,24 @@ const IconColumn: React.FC<{
     </table>
   );
 };
+
+const GutterSpacer: React.FC<{ width: number }> = ({ width }) => (
+  <table
+    width={width}
+    cellPadding={0}
+    cellSpacing={0}
+    align="left"
+    className={EDM_CLASS.colHide}
+    style={{ width: `${width}px` }}
+    role="presentation"
+  >
+    <tr>
+      <td width={width} style={{ width: `${width}px`, fontSize: '0px', lineHeight: '0px' }}>
+        &nbsp;
+      </td>
+    </tr>
+  </table>
+);
 
 // ============================================================================
 // MAIN COMPONENT
@@ -176,6 +195,7 @@ export const ThreeColIcon: React.FC<ThreeColIconProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{
         width: '600px',
         backgroundColor: backgroundColor,
@@ -183,72 +203,31 @@ export const ThreeColIcon: React.FC<ThreeColIconProps> = ({
       role="presentation"
     >
       <tr>
-        <td align="center" valign="top" style={{ padding: deskPadding }}>
+        <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: deskPadding }}>
           <table
             width={520}
             cellPadding={0}
             cellSpacing={0}
+            className={EDM_CLASS.fluid}
             style={{ width: '520px' }}
             role="presentation"
           >
             {rows.map((row, index) => (
               <tr key={index}>
                 <td align="left" valign="top">
-                  {/* Column 1 (Left) */}
-                  <IconColumn
-                    column={row.left}
-                    textHeight={textHeight}
-                    styles={styles}
-                  />
-
-                  {/* Spacer 1 */}
-                  <table
-                    width={gutterWidth}
-                    cellPadding={0}
-                    cellSpacing={0}
-                    align="left"
-                    style={{ width: `${gutterWidth}px` }}
-                    role="presentation"
-                  >
-                    <tr>
-                      <td width={gutterWidth} style={{ width: `${gutterWidth}px` }}>
-                        &nbsp;
-                      </td>
-                    </tr>
-                  </table>
-
-                  {/* Column 2 (Center) */}
-                  <IconColumn
-                    column={row.center}
-                    textHeight={textHeight}
-                    styles={styles}
-                  />
-
-                  {/* Spacer 2 */}
-                  <table
-                    width={gutterWidth}
-                    cellPadding={0}
-                    cellSpacing={0}
-                    align="left"
-                    style={{ width: `${gutterWidth}px` }}
-                    role="presentation"
-                  >
-                    <tr>
-                      <td width={gutterWidth} style={{ width: `${gutterWidth}px` }}>
-                        &nbsp;
-                      </td>
-                    </tr>
-                  </table>
-
-                  {/* Column 3 (Right) */}
-                  <IconColumn
-                    column={row.right}
-                    textHeight={textHeight}
-                    styles={styles}
-                  />
+                  <IconColumn column={row.left} textHeight={textHeight} styles={styles} />
+                  <GutterSpacer width={gutterWidth} />
+                  <IconColumn column={row.center} textHeight={textHeight} styles={styles} />
+                  <GutterSpacer width={gutterWidth} />
+                  <IconColumn column={row.right} textHeight={textHeight} styles={styles} />
                 </td>
               </tr>
             ))}
+            <tr>
+              <td className={EDM_CLASS.clearfix} style={{ fontSize: '0px', lineHeight: '0px' }}>
+                &nbsp;
+              </td>
+            </tr>
           </table>
         </td>
       </tr>
@@ -257,4 +236,3 @@ export const ThreeColIcon: React.FC<ThreeColIconProps> = ({
 };
 
 export default ThreeColIcon;
-

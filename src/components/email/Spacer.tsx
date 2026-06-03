@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 export interface SpacerProps {
   height?: number;
@@ -14,6 +15,7 @@ export const Spacer: React.FC<SpacerProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >

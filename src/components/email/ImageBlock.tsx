@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Img, Link } from '@react-email/components';
+import { EDM_CLASS, fluidImgStyle } from '@/lib/email/responsive';
 
 export interface ImageBlockProps {
   imgSrc: string;
@@ -30,12 +31,11 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
       width={imgWidth}
       height={imgHeight}
       alt={altText}
-      style={{
-        display: 'block',
-        width: `${imgWidth}px`,
+      className={EDM_CLASS.imgFluid}
+      style={fluidImgStyle(imgWidth, {
         height: imgHeight ? `${imgHeight}px` : 'auto',
         borderRadius: imgBorderRadius,
-      }}
+      })}
     />
   );
 
@@ -44,11 +44,12 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >
       <tr>
-        <td align={align} valign="top" style={{ padding: deskPadding }}>
+        <td align={align} valign="top" className={EDM_CLASS.pad} style={{ padding: deskPadding }}>
           {url ? (
             <Link href={url} target="_blank">
               {image}

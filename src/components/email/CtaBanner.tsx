@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 export interface CtaBannerProps {
   headline: string;
@@ -33,11 +34,12 @@ export const CtaBanner: React.FC<CtaBannerProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >
       <tr>
-        <td align="center" valign="top" style={{ padding: deskPadding, fontFamily }}>
+        <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: deskPadding, fontFamily }}>
           <p
             style={{
               fontSize: '24px',
@@ -63,6 +65,7 @@ export const CtaBanner: React.FC<CtaBannerProps> = ({
           )}
           <a
             href={buttonUrl}
+            className={EDM_CLASS.cta}
             style={{
               display: 'inline-block',
               fontFamily,
@@ -74,6 +77,8 @@ export const CtaBanner: React.FC<CtaBannerProps> = ({
               textDecoration: 'none',
               textTransform: 'uppercase',
               letterSpacing: '1px',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
             {buttonText}

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Img, Link } from '@react-email/components';
+import { EDM_CLASS, fluidImgStyle } from '@/lib/email/responsive';
 
 export interface HeroBannerProps {
   imgSrc: string;
@@ -49,12 +50,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       width={imgWidth}
       height={imgHeight}
       alt={altText}
-      style={{
-        display: 'block',
-        width: `${imgWidth}px`,
+      className={EDM_CLASS.imgFluid}
+      style={fluidImgStyle(imgWidth, {
         height: imgHeight ? `${imgHeight}px` : 'auto',
-        maxWidth: '100%',
-      }}
+      })}
     />
   );
 
@@ -63,6 +62,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >
@@ -76,6 +76,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <td
             align={textAlign}
             valign="top"
+            className={EDM_CLASS.pad}
             style={{
               padding: deskPadding,
               backgroundColor: contentBackgroundColor,
@@ -110,8 +111,11 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             {ctaText && ctaUrl && (
               <Link
                 href={ctaUrl}
+                className={EDM_CLASS.cta}
                 style={{
                   display: 'inline-block',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
                   fontFamily,
                   fontSize: '14px',
                   fontWeight: 600,

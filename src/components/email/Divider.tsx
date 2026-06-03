@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 export interface DividerProps {
   backgroundColor?: string;
@@ -20,15 +21,17 @@ export const Divider: React.FC<DividerProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >
       <tr>
-        <td align="center" valign="top" style={{ padding: deskPadding }}>
+        <td align="center" valign="top" className={EDM_CLASS.pad} style={{ padding: deskPadding }}>
           <table
             width={width}
             cellPadding={0}
             cellSpacing={0}
+            className={EDM_CLASS.fluid}
             style={{ width: `${width}px` }}
             role="presentation"
           >

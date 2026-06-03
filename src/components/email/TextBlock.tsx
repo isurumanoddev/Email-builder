@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { EDM_CLASS } from '@/lib/email/responsive';
 
 export interface TextBlockProps {
   content: string;
@@ -24,6 +25,7 @@ export const TextBlock: React.FC<TextBlockProps> = ({
       width={600}
       cellPadding={0}
       cellSpacing={0}
+      className={EDM_CLASS.wrapper}
       style={{ width: '600px', backgroundColor }}
       role="presentation"
     >
@@ -31,6 +33,7 @@ export const TextBlock: React.FC<TextBlockProps> = ({
         <td
           align={textAlign}
           valign="top"
+          className={EDM_CLASS.pad}
           style={{
             padding: deskPadding,
             fontFamily:
