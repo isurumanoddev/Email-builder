@@ -22,6 +22,7 @@ interface BuilderState {
   loadTemplate: (id: string) => Promise<void>;
   selectBlock: (id: string | null) => void;
   addBlock: (componentId: string, index?: number) => void;
+  addBlocksFromAi: (blocks: { componentId: string; props: Record<string, unknown>; label?: string }[]) => void;
   removeBlock: (id: string) => void;
   duplicateBlock: (id: string) => void;
   reorderBlocks: (activeId: string, overId: string) => void;
@@ -114,6 +115,38 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     set({
       ...markDirty(get(), { blocks }),
       selectedBlockId: block.id,
+    });
+  },
+
+  addBlocksFromAi: (aiBlocks) => {
+    const { registry, template } = get();
+    if (!template || aiBlocks.length === 0) return;
+
+    const newBlocks: TemplateBlock[] = [];
+
+    for (const aiBlock of aiBlocks) {
+      const entry = registry.find((c) => c.id === aiBlock.componentId);
+      if (!entry) continue;
+
+      newBlocks.push({
+        id: generateId(),
+        componentId: entry.id,
+        componentVersion: entry.version,
+        props: {
+          ...structuredClone(entry.defaultProps),
+          ...aiBlock.props,
+        },
+        label: aiBlock.label ?? entry.name,
+      });
+    }
+
+    if (newBlocks.length === 0) return;
+
+    const blocks = [...template.blocks, ...newBlocks];
+
+    set({
+      ...markDirty(get(), { blocks }),
+      selectedBlockId: newBlocks[0].id,
     });
   },
 

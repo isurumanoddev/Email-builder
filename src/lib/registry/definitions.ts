@@ -404,6 +404,7 @@ export const componentDefinitions: ComponentDefinition[] = [
     },
     fields: [
       { key: 'imgSrc', label: 'Image URL', type: 'image', required: true, group: 'Content' },
+      { key: 'mobileSrc', label: 'Mobile Image URL', type: 'image', group: 'Content', advanced: true },
       { key: 'imgWidth', label: 'Width (px)', type: 'number', group: 'Layout' },
       { key: 'altText', label: 'Alt Text', type: 'text', group: 'Content' },
       { key: 'url', label: 'Link URL', type: 'url', group: 'Content' },

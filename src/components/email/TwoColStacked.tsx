@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Img, Link } from '@react-email/components';
-import { EDM_CLASS, fluidImgStyle } from '@/lib/email/responsive';
+import { Link } from '@react-email/components';
+import { EDM_CLASS } from '@/lib/email/responsive';
+import { ResponsiveImg } from '@/lib/email/ResponsiveImg';
 
 // ============================================================================
 // TYPES
@@ -164,25 +165,23 @@ const SingleImageRow: React.FC<{
             <td align="center" valign="top" style={{ backgroundColor }}>
               {row.url ? (
                 <Link href={row.url} style={{ color: '#181716' }} target="_blank">
-                  <Img
-                    src={row.desktopImgSrc || ''}
+                  <ResponsiveImg
+                    deskSrc={row.desktopImgSrc || ''}
+                    mobSrc={row.mobileImgSrc}
                     width={width}
+                    height={row.height}
                     alt={row.altText || ''}
-                    className={EDM_CLASS.imgFluid}
-                    style={fluidImgStyle(width, {
-                      height: row.height ? `${row.height}px` : 'auto',
-                    })}
+                    style={{ height: row.height ? `${row.height}px` : 'auto' }}
                   />
                 </Link>
               ) : (
-                <Img
-                  src={row.desktopImgSrc || ''}
+                <ResponsiveImg
+                  deskSrc={row.desktopImgSrc || ''}
+                  mobSrc={row.mobileImgSrc}
                   width={width}
+                  height={row.height}
                   alt={row.altText || ''}
-                  className={EDM_CLASS.imgFluid}
-                  style={fluidImgStyle(width, {
-                    height: row.height ? `${row.height}px` : 'auto',
-                  })}
+                  style={{ height: row.height ? `${row.height}px` : 'auto' }}
                 />
               )}
             </td>
@@ -235,21 +234,21 @@ const ProductColumn: React.FC<{
               style={{ color: '#181716' }}
               target={product.urlTarget || '_blank'}
             >
-              <Img
-                src={product.deskImgSrc || ''}
+              <ResponsiveImg
+                deskSrc={product.deskImgSrc || ''}
+                mobSrc={product.mobImgSrc}
                 width={imgWidth}
                 alt={product.altText || ''}
-                className={EDM_CLASS.imgFluid}
-                style={fluidImgStyle(imgWidth, { borderRadius: product.imgBorderRadius })}
+                style={{ borderRadius: product.imgBorderRadius }}
               />
             </Link>
           ) : (
-            <Img
-              src={product.deskImgSrc || ''}
+            <ResponsiveImg
+              deskSrc={product.deskImgSrc || ''}
+              mobSrc={product.mobImgSrc}
               width={imgWidth}
               alt={product.altText || ''}
-              className={EDM_CLASS.imgFluid}
-              style={fluidImgStyle(imgWidth, { borderRadius: product.imgBorderRadius })}
+              style={{ borderRadius: product.imgBorderRadius }}
             />
           )}
         </td>

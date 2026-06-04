@@ -17,10 +17,37 @@ export const EDM_CLASS = {
   stackCellLeft: 'edm-stack-cell-left',
   footerStack: 'edm-footer-stack',
   clearfix: 'edm-clearfix',
+  deskImg: 'edm-desk-img',
+  mobImg: 'edm-mob-img',
 } as const;
 
 export const EMAIL_RESPONSIVE_CSS = `
+  .${EDM_CLASS.deskImg} {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .${EDM_CLASS.mobImg} {
+    display: none !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    mso-hide: all;
+  }
   @media only screen and (max-width: 600px) {
+    .${EDM_CLASS.deskImg} {
+      display: none !important;
+      max-height: 0 !important;
+      overflow: hidden !important;
+      mso-hide: all;
+    }
+    .${EDM_CLASS.mobImg} {
+      display: block !important;
+      max-height: none !important;
+      overflow: visible !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+    }
     .${EDM_CLASS.wrapper} {
       width: 100% !important;
       max-width: 100% !important;
@@ -116,3 +143,5 @@ export function fluidImgStyle(width: number, extra?: CSSProperties): CSSProperti
     ...extra,
   };
 }
+
+export type { ResponsiveImgProps } from './ResponsiveImg';

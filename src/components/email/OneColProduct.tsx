@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Img, Link } from '@react-email/components';
-import { EDM_CLASS, fluidImgStyle } from '@/lib/email/responsive';
+import { Link } from '@react-email/components';
+import { EDM_CLASS } from '@/lib/email/responsive';
+import { ResponsiveImg } from '@/lib/email/ResponsiveImg';
 
 // ============================================================================
 // TYPES
@@ -191,21 +192,21 @@ export const OneColProduct: React.FC<OneColProductProps> = ({
                         >
                           {item.url ? (
                             <Link href={item.url} target="_blank">
-                              <Img
-                                src={item.deskImgSrc}
+                              <ResponsiveImg
+                                deskSrc={item.deskImgSrc}
+                                mobSrc={item.mobImgSrc}
                                 width={imgWidth}
                                 alt={item.altText || ''}
-                                className={EDM_CLASS.imgFluid}
-                                style={fluidImgStyle(imgWidth, { borderRadius: item.imgBorderRadius })}
+                                style={{ borderRadius: item.imgBorderRadius }}
                               />
                             </Link>
                           ) : (
-                            <Img
-                              src={item.deskImgSrc}
+                            <ResponsiveImg
+                              deskSrc={item.deskImgSrc}
+                              mobSrc={item.mobImgSrc}
                               width={imgWidth}
                               alt={item.altText || ''}
-                              className={EDM_CLASS.imgFluid}
-                              style={fluidImgStyle(imgWidth, { borderRadius: item.imgBorderRadius })}
+                              style={{ borderRadius: item.imgBorderRadius }}
                             />
                           )}
                         </td>

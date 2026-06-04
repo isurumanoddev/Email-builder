@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AiImportModal } from '@/builder/components/AiImportModal';
+import { FigmaImportModal } from '@/builder/components/FigmaImportModal';
 import { useBuilderStore } from '@/builder/store/builderStore';
 import { downloadBlob } from '@/builder/utils/download';
 import { sanitizeExportName } from '@/lib/export/sanitizeName';
@@ -21,6 +23,8 @@ export function BuilderToolbar() {
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [aiImportOpen, setAiImportOpen] = useState(false);
+  const [figmaImportOpen, setFigmaImportOpen] = useState(false);
 
   const handleDuplicate = async () => {
     if (!template) return;
@@ -119,6 +123,22 @@ export function BuilderToolbar() {
           />
           Advanced
         </label>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm btn-figma"
+          onClick={() => setFigmaImportOpen(true)}
+          title="Import frames directly from Figma via URL"
+        >
+          Figma Import
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() => setAiImportOpen(true)}
+          title="Upload screenshots to generate components with AI"
+        >
+          AI Import
+        </button>
         <a
           href="http://localhost:3005"
           target="_blank"
@@ -153,6 +173,9 @@ export function BuilderToolbar() {
           {isSaving ? 'Saving...' : 'Save'}
         </button>
       </div>
+
+      <FigmaImportModal open={figmaImportOpen} onClose={() => setFigmaImportOpen(false)} />
+      <AiImportModal open={aiImportOpen} onClose={() => setAiImportOpen(false)} />
     </header>
   );
 }

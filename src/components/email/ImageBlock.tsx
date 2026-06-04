@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { Img, Link } from '@react-email/components';
-import { EDM_CLASS, fluidImgStyle } from '@/lib/email/responsive';
+import { Link } from '@react-email/components';
+import { EDM_CLASS } from '@/lib/email/responsive';
+import { ResponsiveImg } from '@/lib/email/ResponsiveImg';
 
 export interface ImageBlockProps {
   imgSrc: string;
+  mobileSrc?: string;
   imgWidth?: number;
   imgHeight?: number;
   altText?: string;
@@ -16,6 +18,7 @@ export interface ImageBlockProps {
 
 export const ImageBlock: React.FC<ImageBlockProps> = ({
   imgSrc,
+  mobileSrc,
   imgWidth = 520,
   imgHeight,
   altText = 'Image',
@@ -26,16 +29,13 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   imgBorderRadius = '0px',
 }) => {
   const image = (
-    <Img
-      src={imgSrc}
+    <ResponsiveImg
+      deskSrc={imgSrc}
+      mobSrc={mobileSrc}
       width={imgWidth}
       height={imgHeight}
       alt={altText}
-      className={EDM_CLASS.imgFluid}
-      style={fluidImgStyle(imgWidth, {
-        height: imgHeight ? `${imgHeight}px` : 'auto',
-        borderRadius: imgBorderRadius,
-      })}
+      style={{ borderRadius: imgBorderRadius }}
     />
   );
 

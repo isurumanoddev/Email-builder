@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
-    const ext = EXT_BY_MIME[file.type] ?? path.extname(file.name) || '.png';
+    const ext = EXT_BY_MIME[file.type] ?? (path.extname(file.name) || '.png');
     const filename = `${generateId()}${ext}`;
     const filePath = path.join(UPLOAD_DIR, filename);
 
