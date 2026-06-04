@@ -1,14 +1,19 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { generateId } from '@/lib/utils/id';
-import { getFigmaFileImages, getFigmaImages, getFigmaNodes } from './client';
+import {
+  getFigmaFileImages,
+  getFigmaImages,
+  getFigmaNodes,
+  getFigmaVariables,
+} from './client';
 import { extractDesignContext } from './extractDesignContext';
 import {
+  collectExportNodeIds,
   collectImageRefs,
-  collectNodeIdsForRender,
   parseFigmaNode,
+  resolveExportUrls,
   resolveImageRefsInTree,
-  resolveNodeRenderUrls,
   type ParsedFigmaNode,
 } from './parseFigmaNode';
 import { parseFigmaUrl } from './parseUrl';
@@ -16,7 +21,7 @@ import { parseFigmaUrl } from './parseUrl';
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'images', 'uploads');
 
 async function downloadToUploads(imageUrl: string, prefix: string): Promise<string> {
-  const res = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
+  const res = await fetch(imageUrl, { signal: AbortSignal.timeout(60000) });
   if (!res.ok) {
     throw new Error(`Failed to download Figma render (${res.status})`);
   }
@@ -35,14 +40,14 @@ async function resolveTreeAssets(
   node: ParsedFigmaNode
 ): Promise<ParsedFigmaNode> {
   const imageRefs = [...new Set(collectImageRefs(node))];
-  const renderNodeIds = [...new Set(collectNodeIdsForRender(node))];
+  const exportNodeIds = [...new Set(collectExportNodeIds(node))];
 
   const [fileImages, renderImages] = await Promise.all([
     imageRefs.length > 0
       ? getFigmaFileImages(fileKey)
       : Promise.resolve({} as Record<string, string | null>),
-    renderNodeIds.length > 0
-      ? getFigmaImages(fileKey, renderNodeIds, 2)
+    exportNodeIds.length > 0
+      ? getFigmaImages(fileKey, exportNodeIds, 2)
       : Promise.resolve({} as Record<string, string | null>),
   ]);
 
@@ -56,15 +61,15 @@ async function resolveTreeAssets(
 
   let resolved = resolveImageRefsInTree(node, localRefMap);
 
-  const localNodeUrlMap: Record<string, string> = {};
-  for (const nodeId of renderNodeIds) {
+  const localExportMap: Record<string, string> = {};
+  for (const nodeId of exportNodeIds) {
     const remoteUrl = renderImages[nodeId];
     if (remoteUrl) {
-      localNodeUrlMap[nodeId] = await downloadToUploads(remoteUrl, 'figma-node');
+      localExportMap[nodeId] = await downloadToUploads(remoteUrl, 'figma-export');
     }
   }
 
-  resolved = resolveNodeRenderUrls(resolved, localNodeUrlMap);
+  resolved = resolveExportUrls(resolved, localExportMap);
   return resolved;
 }
 
@@ -104,17 +109,20 @@ export async function importFromFigma(input: FigmaImportInput): Promise<FigmaImp
 
   const nodeIds = mobile ? [desktop.nodeId, mobile.nodeId] : [desktop.nodeId];
 
-  const [nodesResponse, images] = await Promise.all([
+  const [nodesResponse, variablesMeta, frameImages] = await Promise.all([
     getFigmaNodes(desktop.fileKey, nodeIds),
-    getFigmaImages(desktop.fileKey, nodeIds, 1),
+    getFigmaVariables(desktop.fileKey),
+    getFigmaImages(desktop.fileKey, nodeIds, 2),
   ]);
+
+  const variables = variablesMeta?.variables;
 
   const desktopNodeDoc = nodesResponse.nodes[desktop.nodeId]?.document;
   if (!desktopNodeDoc) {
     throw new Error('Could not load the selected Figma frame. Check the node-id in the URL.');
   }
 
-  const desktopImageUrl = images[desktop.nodeId];
+  const desktopImageUrl = frameImages[desktop.nodeId];
   if (!desktopImageUrl) {
     throw new Error('Figma could not render the desktop frame as an image.');
   }
@@ -124,26 +132,36 @@ export async function importFromFigma(input: FigmaImportInput): Promise<FigmaImp
   let savedMobileUrl: string | undefined;
   let designContext = extractDesignContext(desktopNodeDoc);
 
-  let parsedDesktop = parseFigmaNode(desktopNodeDoc);
+  let parsedDesktop = parseFigmaNode(desktopNodeDoc, variables);
+  parsedDesktop.exportUrl = savedDesktopUrl;
+
   let parsedMobile: ParsedFigmaNode | undefined;
 
   if (mobile) {
     const mobileNodeDoc = nodesResponse.nodes[mobile.nodeId]?.document;
-    const mobileImageUrl = images[mobile.nodeId];
+    const mobileImageUrl = frameImages[mobile.nodeId];
 
     if (mobileNodeDoc) {
       designContext += `\n\n--- Mobile frame ---\n${extractDesignContext(mobileNodeDoc)}`;
-      parsedMobile = parseFigmaNode(mobileNodeDoc);
+      parsedMobile = parseFigmaNode(mobileNodeDoc, variables);
     }
 
     if (mobileImageUrl) {
       savedMobileUrl = await downloadToUploads(mobileImageUrl, 'figma-mob');
+      if (parsedMobile) {
+        parsedMobile.exportUrl = savedMobileUrl;
+      }
     }
   }
 
   parsedDesktop = await resolveTreeAssets(desktop.fileKey, parsedDesktop);
+  parsedDesktop.exportUrl = savedDesktopUrl;
+
   if (parsedMobile) {
     parsedMobile = await resolveTreeAssets(desktop.fileKey, parsedMobile);
+    if (savedMobileUrl) {
+      parsedMobile.exportUrl = savedMobileUrl;
+    }
   }
 
   return {

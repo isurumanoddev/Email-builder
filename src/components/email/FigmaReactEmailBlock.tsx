@@ -48,17 +48,62 @@ function ResponsiveStyles({ tree }: { tree: ReactEmailNode }) {
   );
 }
 
-function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
+/** Email clients render background colors more reliably on td than on table. */
+function renderSection(
+  node: ReactEmailNode & { type: 'Section' },
+  key: string,
+  isRoot = false
+): React.ReactNode {
+  const {
+    backgroundColor,
+    padding,
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
+    textAlign,
+    maxWidth,
+    width,
+    margin,
+    ...restStyle
+  } = node.style ?? {};
+
+  const cellStyle: React.CSSProperties = {
+    ...restStyle,
+    backgroundColor,
+    padding,
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
+    textAlign,
+    width: width ?? '100%',
+  };
+
+  const tableStyle: React.CSSProperties = {
+    width: '100%',
+    margin: margin ?? 0,
+    maxWidth: isRoot ? 600 : maxWidth,
+  };
+
+  return (
+    <Section key={key} style={tableStyle}>
+      <Row>
+        <Column style={cellStyle}>
+          {node.children.map((child, i) => renderNode(child, `${key}-s-${i}`))}
+        </Column>
+      </Row>
+    </Section>
+  );
+}
+
+function renderNode(node: ReactEmailNode, key: string, isRoot = false): React.ReactNode {
   switch (node.type) {
     case 'Section':
-      return (
-        <Section key={key} style={{ maxWidth: 600, ...node.style }}>
-          {node.children.map((child, i) => renderNode(child, `${key}-s-${i}`))}
-        </Section>
-      );
+      return renderSection(node, key, isRoot);
     case 'Row':
       return (
-        <Row key={key}>
+        <Row key={key} style={node.style}>
           {node.children.map((child, i) => renderNode(child, `${key}-r-${i}`))}
         </Row>
       );
@@ -81,6 +126,12 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
         </Heading>
       );
     case 'Img': {
+      const imgStyle: React.CSSProperties = {
+        display: 'block',
+        maxWidth: '100%',
+        height: 'auto',
+      };
+
       if (node.mobileSrc) {
         const base = node.className ?? `figma-img-${key}`;
         return (
@@ -91,7 +142,7 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
               height={node.height}
               alt={node.alt ?? ''}
               className={`${base}-desk`}
-              style={{ maxWidth: '100%', height: 'auto' }}
+              style={imgStyle}
             />
             <Img
               src={node.mobileSrc}
@@ -99,11 +150,12 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
               height={node.height}
               alt={node.alt ?? ''}
               className={`${base}-mob`}
-              style={{ maxWidth: '100%', height: 'auto' }}
+              style={imgStyle}
             />
           </React.Fragment>
         );
       }
+
       return (
         <Img
           key={key}
@@ -111,22 +163,60 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
           width={node.width}
           height={node.height}
           alt={node.alt ?? ''}
-          style={{ maxWidth: '100%', height: 'auto' }}
+          style={imgStyle}
         />
       );
     }
     case 'Link':
       return (
-        <Link key={key} href={node.href}>
+        <Link key={key} href={node.href} style={{ color: 'inherit', textDecoration: 'none' }}>
           {node.children.map((child, i) => renderNode(child, `${key}-l-${i}`))}
         </Link>
       );
-    case 'Button':
+    case 'Button': {
+      const {
+        backgroundColor: containerBg,
+        padding,
+        paddingTop,
+        paddingRight,
+        paddingBottom,
+        paddingLeft,
+        textAlign,
+        marginTop,
+        ...containerRest
+      } = node.containerStyle ?? {};
+
       return (
-        <Button key={key} href={node.href} style={node.style}>
-          {node.label}
-        </Button>
+        <Section key={key} style={{ width: '100%', marginTop, ...containerRest }}>
+          <Row>
+            <Column
+              style={{
+                width: '100%',
+                textAlign: textAlign ?? 'center',
+                backgroundColor: containerBg,
+                padding,
+                paddingTop,
+                paddingRight,
+                paddingBottom,
+                paddingLeft,
+              }}
+            >
+              <Button
+                href={node.href}
+                style={{
+                  ...node.style,
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {node.label}
+              </Button>
+            </Column>
+          </Row>
+        </Section>
       );
+    }
     case 'Hr':
       return <Hr key={key} style={node.style} />;
     default:
@@ -150,7 +240,7 @@ export const FigmaReactEmailBlock: React.FC<FigmaReactEmailBlockProps> = ({
   return (
     <>
       <ResponsiveStyles tree={tree} />
-      {renderNode(tree, 'root')}
+      {renderNode(tree, 'root', true)}
     </>
   );
 };

@@ -31,6 +31,8 @@ const parsedFigmaNodeSchema: z.ZodType<ParsedFigmaNode> = z.lazy(() =>
     layoutMode: z.string().optional(),
     cornerRadius: z.number().optional(),
     imageRef: z.string().optional(),
+    exportUrl: z.string().optional(),
+    componentId: z.string().optional(),
     nodeId: z.string().optional(),
     children: z.array(parsedFigmaNodeSchema),
   })
@@ -41,6 +43,8 @@ const buildEmailSchema = z.object({
   mobileNode: parsedFigmaNodeSchema.optional(),
   nodeName: z.string(),
   fileName: z.string().optional(),
+  desktopUrl: z.string().optional(),
+  mobileUrl: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -50,7 +54,8 @@ export async function POST(request: Request) {
 
     const { tree, warnings, nodeCount } = figmaToReactEmailTree(
       parsed.desktopNode,
-      parsed.mobileNode
+      parsed.mobileNode,
+      { desktopUrl: parsed.desktopUrl, mobileUrl: parsed.mobileUrl }
     );
 
     const block = {
@@ -81,7 +86,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       confidence: 1,
       blocks: [block],
-      reasoning: `Built ${nodeCount} React Email node(s) from Figma frame "${parsed.nodeName}".`,
+      reasoning: `Built pixel-accurate email from Figma frame "${parsed.nodeName}" (${nodeCount} React Email nodes).`,
       previewHtml,
       warnings,
       nodeCount,

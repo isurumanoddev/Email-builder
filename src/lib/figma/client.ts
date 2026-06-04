@@ -1,10 +1,18 @@
 const FIGMA_API = 'https://api.figma.com/v1';
+const IMAGE_BATCH_SIZE = 200;
 
 export interface FigmaPaint {
   type?: string;
   visible?: boolean;
+  opacity?: number;
   color?: { r: number; g: number; b: number; a?: number };
   imageRef?: string;
+  scaleMode?: string;
+}
+
+export interface FigmaVariableAlias {
+  type?: string;
+  id?: string;
 }
 
 export interface FigmaNodeDocument {
@@ -12,10 +20,13 @@ export interface FigmaNodeDocument {
   name: string;
   type: string;
   visible?: boolean;
+  opacity?: number;
   characters?: string;
   style?: Record<string, unknown>;
   fills?: FigmaPaint[];
   strokes?: FigmaPaint[];
+  background?: FigmaPaint[];
+  backgroundColor?: { r: number; g: number; b: number; a?: number };
   absoluteBoundingBox?: { width?: number; height?: number; x?: number; y?: number };
   layoutMode?: string;
   itemSpacing?: number;
@@ -23,8 +34,17 @@ export interface FigmaNodeDocument {
   paddingRight?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  primaryAxisAlignItems?: string;
+  counterAxisAlignItems?: string;
+  layoutAlign?: string;
+  layoutSizingHorizontal?: string;
+  layoutSizingVertical?: string;
   cornerRadius?: number;
   rectangleCornerRadii?: number[];
+  strokeWeight?: number;
+  componentId?: string;
+  boundVariables?: Record<string, FigmaVariableAlias | FigmaVariableAlias[]>;
+  styles?: Record<string, string>;
   children?: FigmaNodeDocument[];
 }
 
@@ -34,14 +54,41 @@ export interface FigmaFileImagesResponse {
   status?: number;
 }
 
+export interface FigmaNodeEntry {
+  document: FigmaNodeDocument;
+  components?: Record<string, unknown>;
+  componentSets?: Record<string, unknown>;
+  styles?: Record<string, unknown>;
+}
+
 export interface FigmaNodesResponse {
   name: string;
-  nodes: Record<
-    string,
-    {
-      document: FigmaNodeDocument;
-    } | null
-  >;
+  nodes: Record<string, FigmaNodeEntry | null>;
+}
+
+export interface FigmaColorValue {
+  r: number;
+  g: number;
+  b: number;
+  a?: number;
+}
+
+export interface FigmaVariable {
+  name?: string;
+  resolvedType?: string;
+  valuesByMode?: Record<string, FigmaColorValue | number | string | boolean>;
+}
+
+export interface FigmaVariablesResponse {
+  status?: number;
+  error?: boolean;
+  meta?: {
+    variables?: Record<string, FigmaVariable>;
+    variableCollections?: Record<
+      string,
+      { name?: string; modes?: Array<{ modeId: string; name: string }> }
+    >;
+  };
 }
 
 function getToken(): string {
@@ -57,7 +104,7 @@ function getToken(): string {
 async function figmaFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${FIGMA_API}${path}`, {
     headers: { 'X-Figma-Token': getToken() },
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(60000),
   });
 
   if (!res.ok) {
@@ -74,12 +121,14 @@ async function figmaFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Fetch full node subtree — depth must be high enough to include all layers. */
 export async function getFigmaNodes(
   fileKey: string,
-  nodeIds: string[]
+  nodeIds: string[],
+  depth = 100
 ): Promise<FigmaNodesResponse> {
   const ids = nodeIds.map(encodeURIComponent).join(',');
-  return figmaFetch(`/files/${fileKey}/nodes?ids=${ids}`);
+  return figmaFetch(`/files/${fileKey}/nodes?ids=${ids}&depth=${depth}`);
 }
 
 export async function getFigmaImages(
@@ -87,11 +136,20 @@ export async function getFigmaImages(
   nodeIds: string[],
   scale = 2
 ): Promise<Record<string, string | null>> {
-  const ids = nodeIds.map(encodeURIComponent).join(',');
-  const data = await figmaFetch<{ images: Record<string, string | null> }>(
-    `/images/${fileKey}?ids=${ids}&format=png&scale=${scale}`
-  );
-  return data.images;
+  if (nodeIds.length === 0) return {};
+
+  const merged: Record<string, string | null> = {};
+
+  for (let i = 0; i < nodeIds.length; i += IMAGE_BATCH_SIZE) {
+    const batch = nodeIds.slice(i, i + IMAGE_BATCH_SIZE);
+    const ids = batch.map(encodeURIComponent).join(',');
+    const data = await figmaFetch<{ images: Record<string, string | null> }>(
+      `/images/${fileKey}?ids=${ids}&format=png&scale=${scale}`
+    );
+    Object.assign(merged, data.images);
+  }
+
+  return merged;
 }
 
 /** Resolve image fill hashes to temporary CDN URLs */
@@ -100,4 +158,18 @@ export async function getFigmaFileImages(
 ): Promise<Record<string, string | null>> {
   const data = await figmaFetch<FigmaFileImagesResponse>(`/files/${fileKey}/images`);
   return data.images ?? {};
+}
+
+/** Resolve Figma variable bindings (requires file_variables:read scope). */
+export async function getFigmaVariables(
+  fileKey: string
+): Promise<FigmaVariablesResponse['meta'] | null> {
+  try {
+    const data = await figmaFetch<FigmaVariablesResponse>(
+      `/files/${fileKey}/variables/local`
+    );
+    return data.meta ?? null;
+  } catch {
+    return null;
+  }
 }

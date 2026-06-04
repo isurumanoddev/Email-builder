@@ -118,6 +118,8 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
           mobileNode: mobileNode ?? undefined,
           nodeName: figmaMeta.nodeName,
           fileName: figmaMeta.fileName,
+          desktopUrl: desktopUrl ?? undefined,
+          mobileUrl: mobileUrl ?? undefined,
         }),
       });
 
@@ -312,8 +314,8 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
               </div>
 
               <p className="import-field-hint">
-                React Email build maps Figma layers to Section, Row, Column, Text, Img, and
-                Button. AI build matches pre-built registry blocks.
+                React Email build exports each Figma section as PNG for pixel-perfect design match,
+                wrapped in Section + Img. AI build matches pre-built registry blocks.
               </p>
             </div>
           )}
