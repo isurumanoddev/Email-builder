@@ -1018,6 +1018,17 @@
   color: var(--text-secondary);
 }
 
+.import-result-warnings {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8rem;
+  color: #eab308;
+}
+
+.import-result-warnings li {
+  margin-bottom: 4px;
+}
+
 .import-result-blocks {
   display: flex;
   flex-wrap: wrap;

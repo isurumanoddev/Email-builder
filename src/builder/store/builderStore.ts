@@ -8,6 +8,7 @@ interface BuilderState {
   template: EmailTemplateDocument | null;
   registry: ComponentRegistryEntry[];
   registryByCategory: Record<string, ComponentRegistryEntry[]>;
+  paletteByCategory: Record<string, ComponentRegistryEntry[]>;
   selectedBlockId: string | null;
   isDirty: boolean;
   isSaving: boolean;
@@ -54,6 +55,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   template: null,
   registry: [],
   registryByCategory: {},
+  paletteByCategory: {},
   selectedBlockId: null,
   isDirty: false,
   isSaving: false,
@@ -70,7 +72,11 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     const res = await fetch('/api/registry');
     if (!res.ok) throw new Error('Failed to load component registry');
     const data = await res.json();
-    set({ registry: data.components, registryByCategory: data.byCategory });
+    set({
+      registry: data.components,
+      registryByCategory: data.byCategory,
+      paletteByCategory: data.paletteByCategory ?? data.byCategory,
+    });
   },
 
   loadTemplate: async (id: string) => {

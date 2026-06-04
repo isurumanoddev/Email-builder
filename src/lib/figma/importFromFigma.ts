@@ -1,8 +1,16 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { generateId } from '@/lib/utils/id';
-import { getFigmaImages, getFigmaNodes } from './client';
+import { getFigmaFileImages, getFigmaImages, getFigmaNodes } from './client';
 import { extractDesignContext } from './extractDesignContext';
+import {
+  collectImageRefs,
+  collectNodeIdsForRender,
+  parseFigmaNode,
+  resolveImageRefsInTree,
+  resolveNodeRenderUrls,
+  type ParsedFigmaNode,
+} from './parseFigmaNode';
 import { parseFigmaUrl } from './parseUrl';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'images', 'uploads');
@@ -22,6 +30,44 @@ async function downloadToUploads(imageUrl: string, prefix: string): Promise<stri
   return `/images/uploads/${filename}`;
 }
 
+async function resolveTreeAssets(
+  fileKey: string,
+  node: ParsedFigmaNode
+): Promise<ParsedFigmaNode> {
+  const imageRefs = [...new Set(collectImageRefs(node))];
+  const renderNodeIds = [...new Set(collectNodeIdsForRender(node))];
+
+  const [fileImages, renderImages] = await Promise.all([
+    imageRefs.length > 0
+      ? getFigmaFileImages(fileKey)
+      : Promise.resolve({} as Record<string, string | null>),
+    renderNodeIds.length > 0
+      ? getFigmaImages(fileKey, renderNodeIds, 2)
+      : Promise.resolve({} as Record<string, string | null>),
+  ]);
+
+  const localRefMap: Record<string, string> = {};
+  for (const ref of imageRefs) {
+    const remoteUrl = fileImages[ref];
+    if (remoteUrl) {
+      localRefMap[ref] = await downloadToUploads(remoteUrl, 'figma-asset');
+    }
+  }
+
+  let resolved = resolveImageRefsInTree(node, localRefMap);
+
+  const localNodeUrlMap: Record<string, string> = {};
+  for (const nodeId of renderNodeIds) {
+    const remoteUrl = renderImages[nodeId];
+    if (remoteUrl) {
+      localNodeUrlMap[nodeId] = await downloadToUploads(remoteUrl, 'figma-node');
+    }
+  }
+
+  resolved = resolveNodeRenderUrls(resolved, localNodeUrlMap);
+  return resolved;
+}
+
 export interface FigmaImportInput {
   figmaUrl: string;
   mobileFigmaUrl?: string;
@@ -33,6 +79,9 @@ export interface FigmaImportResult {
   designContext: string;
   fileName: string;
   nodeName: string;
+  fileKey: string;
+  desktopNode: ParsedFigmaNode;
+  mobileNode?: ParsedFigmaNode;
 }
 
 export async function importFromFigma(input: FigmaImportInput): Promise<FigmaImportResult> {
@@ -60,8 +109,8 @@ export async function importFromFigma(input: FigmaImportInput): Promise<FigmaImp
     getFigmaImages(desktop.fileKey, nodeIds, 1),
   ]);
 
-  const desktopNode = nodesResponse.nodes[desktop.nodeId]?.document;
-  if (!desktopNode) {
+  const desktopNodeDoc = nodesResponse.nodes[desktop.nodeId]?.document;
+  if (!desktopNodeDoc) {
     throw new Error('Could not load the selected Figma frame. Check the node-id in the URL.');
   }
 
@@ -73,14 +122,18 @@ export async function importFromFigma(input: FigmaImportInput): Promise<FigmaImp
   const savedDesktopUrl = await downloadToUploads(desktopImageUrl, 'figma-desk');
 
   let savedMobileUrl: string | undefined;
-  let designContext = extractDesignContext(desktopNode);
+  let designContext = extractDesignContext(desktopNodeDoc);
+
+  let parsedDesktop = parseFigmaNode(desktopNodeDoc);
+  let parsedMobile: ParsedFigmaNode | undefined;
 
   if (mobile) {
-    const mobileNode = nodesResponse.nodes[mobile.nodeId]?.document;
+    const mobileNodeDoc = nodesResponse.nodes[mobile.nodeId]?.document;
     const mobileImageUrl = images[mobile.nodeId];
 
-    if (mobileNode) {
-      designContext += `\n\n--- Mobile frame ---\n${extractDesignContext(mobileNode)}`;
+    if (mobileNodeDoc) {
+      designContext += `\n\n--- Mobile frame ---\n${extractDesignContext(mobileNodeDoc)}`;
+      parsedMobile = parseFigmaNode(mobileNodeDoc);
     }
 
     if (mobileImageUrl) {
@@ -88,11 +141,19 @@ export async function importFromFigma(input: FigmaImportInput): Promise<FigmaImp
     }
   }
 
+  parsedDesktop = await resolveTreeAssets(desktop.fileKey, parsedDesktop);
+  if (parsedMobile) {
+    parsedMobile = await resolveTreeAssets(desktop.fileKey, parsedMobile);
+  }
+
   return {
     desktopUrl: savedDesktopUrl,
     mobileUrl: savedMobileUrl,
     designContext,
     fileName: nodesResponse.name,
-    nodeName: desktopNode.name,
+    nodeName: desktopNodeDoc.name,
+    fileKey: desktop.fileKey,
+    desktopNode: parsedDesktop,
+    mobileNode: parsedMobile,
   };
 }

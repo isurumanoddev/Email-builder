@@ -31,6 +31,8 @@ export interface ComponentDefinition<TProps = Record<string, unknown>> {
   category: ComponentCategory;
   description: string;
   version: number;
+  /** When true, omitted from the builder component palette (import-only blocks). */
+  hideFromPalette?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component: React.ComponentType<any>;
   defaultProps: TProps;

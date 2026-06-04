@@ -9,6 +9,8 @@ interface ImportResultPanelProps {
   reasoning: string;
   blocks: AiBlock[] | { componentId: string; label?: string }[];
   previewHtml?: string;
+  warnings?: string[];
+  buildMode?: 'react-email' | 'ai';
 }
 
 export function ImportResultPanel({
@@ -16,6 +18,8 @@ export function ImportResultPanel({
   reasoning,
   blocks,
   previewHtml,
+  warnings,
+  buildMode,
 }: ImportResultPanelProps) {
   const registry = useBuilderStore((s) => s.registry);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
@@ -25,17 +29,31 @@ export function ImportResultPanel({
 
   const frameWidth = previewMode === 'desktop' ? '100%' : '375px';
   const frameMaxWidth = previewMode === 'desktop' ? '600px' : '375px';
+  const showConfidence = buildMode !== 'react-email';
 
   return (
     <div className="import-result">
       <div className="import-result-header">
-        <span
-          className={`import-confidence ${confidence >= 0.7 ? 'high' : confidence >= 0.5 ? 'medium' : 'low'}`}
-        >
-          {Math.round(confidence * 100)}% match
-        </span>
+        {showConfidence && (
+          <span
+            className={`import-confidence ${confidence >= 0.7 ? 'high' : confidence >= 0.5 ? 'medium' : 'low'}`}
+          >
+            {Math.round(confidence * 100)}% match
+          </span>
+        )}
+        {buildMode === 'react-email' && (
+          <span className="import-confidence high">React Email build</span>
+        )}
         <span className="import-result-reasoning">{reasoning}</span>
       </div>
+
+      {warnings && warnings.length > 0 && (
+        <ul className="import-result-warnings">
+          {warnings.map((warning, i) => (
+            <li key={i}>{warning}</li>
+          ))}
+        </ul>
+      )}
 
       <div className="import-result-blocks">
         {blocks.map((block, i) => (

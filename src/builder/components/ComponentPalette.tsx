@@ -36,9 +36,9 @@ function PaletteItem({ entry }: { entry: ComponentRegistryEntry }) {
 }
 
 export function ComponentPalette() {
-  const registryByCategory = useBuilderStore((s) => s.registryByCategory);
+  const paletteByCategory = useBuilderStore((s) => s.paletteByCategory);
 
-  const categories = Object.keys(registryByCategory).sort();
+  const categories = Object.keys(paletteByCategory).sort();
 
   return (
     <aside className="builder-panel">
@@ -50,7 +50,7 @@ export function ComponentPalette() {
           categories.map((category) => (
             <div key={category} className="palette-category">
               <div className="palette-category-title">{formatCategoryLabel(category)}</div>
-              {registryByCategory[category].map((entry) => (
+              {paletteByCategory[category].map((entry) => (
                 <PaletteItem key={entry.id} entry={entry} />
               ))}
             </div>

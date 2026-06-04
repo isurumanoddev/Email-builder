@@ -4,17 +4,19 @@ import { useCallback, useState } from 'react';
 import { ImportResultPanel } from '@/builder/components/ImportResultPanel';
 import { useBuilderStore } from '@/builder/store/builderStore';
 import type { AiBlock } from '@/lib/ai/schemas/analyzeResult';
+import type { ParsedFigmaNode } from '@/lib/figma/parseFigmaNode';
 
 interface FigmaImportModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-interface AnalyzeResponse {
+interface BuildResponse {
   confidence: number;
   blocks: AiBlock[];
   reasoning: string;
   previewHtml?: string;
+  warnings?: string[];
 }
 
 type Step = 'connect' | 'review' | 'result';
@@ -28,13 +30,16 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
   const [desktopUrl, setDesktopUrl] = useState<string | null>(null);
   const [mobileUrl, setMobileUrl] = useState<string | null>(null);
   const [figmaContext, setFigmaContext] = useState<string | null>(null);
+  const [desktopNode, setDesktopNode] = useState<ParsedFigmaNode | null>(null);
+  const [mobileNode, setMobileNode] = useState<ParsedFigmaNode | null>(null);
   const [figmaMeta, setFigmaMeta] = useState<{ fileName: string; nodeName: string } | null>(null);
   const [showContext, setShowContext] = useState(false);
   const [hint, setHint] = useState('');
   const [isFetching, setIsFetching] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [buildMode, setBuildMode] = useState<'react-email' | 'ai' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [result, setResult] = useState<BuildResponse | null>(null);
 
   const reset = useCallback(() => {
     setStep('connect');
@@ -43,11 +48,14 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
     setDesktopUrl(null);
     setMobileUrl(null);
     setFigmaContext(null);
+    setDesktopNode(null);
+    setMobileNode(null);
     setFigmaMeta(null);
     setShowContext(false);
     setHint('');
     setError(null);
     setResult(null);
+    setBuildMode(null);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -83,6 +91,8 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
       setDesktopUrl(data.desktopUrl);
       setMobileUrl(data.mobileUrl ?? null);
       setFigmaContext(data.designContext);
+      setDesktopNode(data.desktopNode);
+      setMobileNode(data.mobileNode ?? null);
       setFigmaMeta({ fileName: data.fileName, nodeName: data.nodeName });
       setStep('review');
     } catch (err) {
@@ -92,10 +102,44 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleBuildReactEmail = async () => {
+    if (!desktopNode || !figmaMeta) return;
+
+    setIsBuilding(true);
+    setBuildMode('react-email');
+    setError(null);
+
+    try {
+      const res = await fetch('/api/figma/build-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          desktopNode,
+          mobileNode: mobileNode ?? undefined,
+          nodeName: figmaMeta.nodeName,
+          fileName: figmaMeta.fileName,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? 'React Email build failed');
+      }
+
+      setResult(data);
+      setStep('result');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'React Email build failed');
+    } finally {
+      setIsBuilding(false);
+    }
+  };
+
+  const handleBuildAi = async () => {
     if (!desktopUrl) return;
 
-    setIsAnalyzing(true);
+    setIsBuilding(true);
+    setBuildMode('ai');
     setError(null);
 
     try {
@@ -120,7 +164,7 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
-      setIsAnalyzing(false);
+      setIsBuilding(false);
     }
   };
 
@@ -146,7 +190,7 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
             <div className="figma-badge">Figma</div>
             <h2 id="figma-import-title">Import from Figma</h2>
             <p className="import-modal-subtitle">
-              Paste frame links — pulls design data and builds email components
+              Pulls design data — build with React Email or AI
             </p>
           </div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={handleClose}>
@@ -266,6 +310,11 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
                   rows={2}
                 />
               </div>
+
+              <p className="import-field-hint">
+                React Email build maps Figma layers to Section, Row, Column, Text, Img, and
+                Button. AI build matches pre-built registry blocks.
+              </p>
             </div>
           )}
 
@@ -275,6 +324,8 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
               reasoning={result.reasoning}
               blocks={result.blocks}
               previewHtml={result.previewHtml}
+              warnings={result.warnings}
+              buildMode={buildMode ?? undefined}
             />
           )}
 
@@ -298,14 +349,26 @@ export function FigmaImportModal({ open, onClose }: FigmaImportModalProps) {
           )}
 
           {step === 'review' && (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm figma-btn-primary"
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-            >
-              {isAnalyzing ? 'Building components...' : 'Build email components'}
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleBuildAi}
+                disabled={isBuilding}
+              >
+                {isBuilding && buildMode === 'ai' ? 'Building...' : 'Build with AI'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm figma-btn-primary"
+                onClick={handleBuildReactEmail}
+                disabled={isBuilding}
+              >
+                {isBuilding && buildMode === 'react-email'
+                  ? 'Building...'
+                  : 'Build with React Email'}
+              </button>
+            </>
           )}
 
           {step === 'result' && (

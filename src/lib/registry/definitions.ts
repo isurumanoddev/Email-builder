@@ -18,6 +18,7 @@ import {
   TextBlock,
   Spacer,
   StatsRow,
+  FigmaReactEmailBlock,
 } from '@/components/email';
 import type { ComponentDefinition } from './types';
 import {
@@ -500,6 +501,54 @@ export const componentDefinitions: ComponentDefinition[] = [
         helpText: 'Array of 3 items: { value, label, valueColor? }' },
       { key: 'backgroundColor', label: 'Background', type: 'color', group: 'Style' },
       { key: 'defaultValueColor', label: 'Value Color', type: 'color', group: 'Style' },
+    ],
+  },
+  {
+    id: 'figma-react-email',
+    name: 'Figma React Email',
+    category: 'layout',
+    description: 'Component built from Figma using React Email primitives',
+    version: 1,
+    hideFromPalette: true,
+    component: FigmaReactEmailBlock,
+    defaultProps: {
+      tree: {
+        type: 'Section',
+        style: { maxWidth: 600, padding: 20 },
+        children: [
+          {
+            type: 'Text',
+            content: 'Figma import placeholder',
+            style: { color: '#666666', fontFamily: 'sans-serif' },
+          },
+        ],
+      },
+      sourceFrame: '',
+      mobileFrame: '',
+    },
+    fields: [
+      {
+        key: 'sourceFrame',
+        label: 'Source Frame',
+        type: 'text',
+        group: 'Content',
+        advanced: true,
+      },
+      {
+        key: 'mobileFrame',
+        label: 'Mobile Frame',
+        type: 'text',
+        group: 'Content',
+        advanced: true,
+      },
+      {
+        key: 'tree',
+        label: 'React Email Tree',
+        type: 'json',
+        group: 'Advanced',
+        advanced: true,
+        helpText: 'Serialized React Email AST from Figma import',
+      },
     ],
   },
 ];

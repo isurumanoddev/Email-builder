@@ -1,12 +1,21 @@
 const FIGMA_API = 'https://api.figma.com/v1';
 
+export interface FigmaPaint {
+  type?: string;
+  visible?: boolean;
+  color?: { r: number; g: number; b: number; a?: number };
+  imageRef?: string;
+}
+
 export interface FigmaNodeDocument {
   id: string;
   name: string;
   type: string;
+  visible?: boolean;
   characters?: string;
   style?: Record<string, unknown>;
-  fills?: Array<{ type?: string; color?: { r: number; g: number; b: number; a?: number } }>;
+  fills?: FigmaPaint[];
+  strokes?: FigmaPaint[];
   absoluteBoundingBox?: { width?: number; height?: number; x?: number; y?: number };
   layoutMode?: string;
   itemSpacing?: number;
@@ -14,7 +23,15 @@ export interface FigmaNodeDocument {
   paddingRight?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  cornerRadius?: number;
+  rectangleCornerRadii?: number[];
   children?: FigmaNodeDocument[];
+}
+
+export interface FigmaFileImagesResponse {
+  images: Record<string, string | null>;
+  error?: boolean;
+  status?: number;
 }
 
 export interface FigmaNodesResponse {
@@ -75,4 +92,12 @@ export async function getFigmaImages(
     `/images/${fileKey}?ids=${ids}&format=png&scale=${scale}`
   );
   return data.images;
+}
+
+/** Resolve image fill hashes to temporary CDN URLs */
+export async function getFigmaFileImages(
+  fileKey: string
+): Promise<Record<string, string | null>> {
+  const data = await figmaFetch<FigmaFileImagesResponse>(`/files/${fileKey}/images`);
+  return data.images ?? {};
 }
