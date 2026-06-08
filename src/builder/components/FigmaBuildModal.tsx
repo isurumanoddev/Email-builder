@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from 'react';
 import { FigmaReviewPanel } from '@/builder/components/figma/FigmaReviewPanel';
-import { OllamaStatusBanner } from '@/builder/components/figma/OllamaStatusBanner';
 import { ImportResultPanel } from '@/builder/components/ImportResultPanel';
 import { useBuilderStore } from '@/builder/store/builderStore';
 import type { AiBlock } from '@/lib/ai/schemas/analyzeResult';
@@ -31,14 +30,12 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
 
   const [step, setStep] = useState<Step>('build');
   const [isBuilding, setIsBuilding] = useState(false);
-  const [buildMode, setBuildMode] = useState<'ai' | 'react-email' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BuildResponse | null>(null);
 
   const reset = useCallback(() => {
     setStep('build');
     setIsBuilding(false);
-    setBuildMode(null);
     setError(null);
     setResult(null);
   }, []);
@@ -48,44 +45,10 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
     onClose();
   }, [onClose, reset]);
 
-  const handleBuildAi = async () => {
-    if (!figmaSession) return;
-
-    setIsBuilding(true);
-    setBuildMode('ai');
-    setError(null);
-
-    try {
-      const res = await fetch('/api/ai/analyze-component', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          desktopUrl: figmaSession.desktopUrl,
-          mobileUrl: figmaSession.mobileUrl,
-          hint: figmaSession.hint,
-          figmaContext: figmaSession.designContext,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error ?? 'AI build failed');
-      }
-
-      setResult(data);
-      setStep('result');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'AI build failed');
-    } finally {
-      setIsBuilding(false);
-    }
-  };
-
   const handleBuildReactEmail = async () => {
     if (!figmaSession) return;
 
     setIsBuilding(true);
-    setBuildMode('react-email');
     setError(null);
 
     try {
@@ -99,6 +62,7 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
           fileName: figmaSession.fileName,
           desktopUrl: figmaSession.desktopUrl,
           mobileUrl: figmaSession.mobileUrl,
+          mode: 'primitives',
         }),
       });
 
@@ -147,7 +111,11 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
               Close
             </button>
             {onFetchAgain && (
-              <button type="button" className="btn btn-primary btn-sm figma-btn-primary" onClick={onFetchAgain}>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm figma-btn-primary"
+                onClick={onFetchAgain}
+              >
                 Fetch from Figma
               </button>
             )}
@@ -168,10 +136,10 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
       >
         <div className="import-modal-header import-modal-header-figma">
           <div>
-            <div className="figma-badge">Build</div>
-            <h2 id="figma-build-title">Build from Figma</h2>
+            <div className="figma-badge">React Email</div>
+            <h2 id="figma-build-title">Build React Email Components</h2>
             <p className="import-modal-subtitle">
-              {figmaSession.nodeName} — AI (Ollama) or React Email
+              {figmaSession.nodeName} — Heading, Text, Button from Figma data
             </p>
           </div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={handleClose}>
@@ -182,17 +150,17 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
         <div className="import-modal-body">
           {step === 'build' && (
             <>
-              <OllamaStatusBanner />
               <FigmaReviewPanel
                 session={figmaSession}
                 hint={figmaSession.hint ?? ''}
                 onHintChange={updateFigmaHint}
-                showHint
+                showHint={false}
               />
               <p className="import-field-hint">
-                <strong>Build with AI</strong> uses your local Ollama vision model + Figma design
-                context to match registry components. <strong>React Email</strong> exports PNG
-                sections for pixel-perfect output.
+                Reads text and buttons directly from the Figma API tree. Header/title text becomes{' '}
+                <strong>Heading</strong> with Figma font size, weight, and color. Buttons become{' '}
+                <strong>Button</strong> with background, radius, and label text from the design.
+                Body copy uses <strong>Text</strong>.
               </p>
             </>
           )}
@@ -204,7 +172,7 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
               blocks={result.blocks}
               previewHtml={result.previewHtml}
               warnings={result.warnings}
-              buildMode={buildMode ?? undefined}
+              buildMode="react-email"
             />
           )}
 
@@ -217,26 +185,14 @@ export function FigmaBuildModal({ open, onClose, onFetchAgain }: FigmaBuildModal
           </button>
 
           {step === 'build' && (
-            <>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleBuildReactEmail}
-                disabled={isBuilding}
-              >
-                {isBuilding && buildMode === 'react-email'
-                  ? 'Building...'
-                  : 'React Email (PNG)'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm figma-btn-primary"
-                onClick={handleBuildAi}
-                disabled={isBuilding}
-              >
-                {isBuilding && buildMode === 'ai' ? 'Building with AI...' : 'Build with AI'}
-              </button>
-            </>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm figma-btn-primary"
+              onClick={handleBuildReactEmail}
+              disabled={isBuilding}
+            >
+              {isBuilding ? 'Building...' : 'Build React Email'}
+            </button>
           )}
 
           {step === 'result' && (

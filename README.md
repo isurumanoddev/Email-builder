@@ -84,7 +84,7 @@ OLLAMA_VISION_MODEL=llava
 FIGMA_ACCESS_TOKEN=your_figma_token
 ```
 
-In the builder: **Fetch from Figma** → **Build from Figma** (uses Ollama + Figma API design context).
+In the builder: **Fetch from Figma** → **Build React Email** (uses Ollama + Figma API to generate `@react-email/components` trees: Section, Text, Heading, Button, Img, Row, Column).
 
 ---
 

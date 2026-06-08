@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 
 export type ReactEmailNode =
   | { type: 'Section'; style?: CSSProperties; children: ReactEmailNode[] }
+  | { type: 'Container'; style?: CSSProperties; children: ReactEmailNode[] }
   | { type: 'Row'; style?: CSSProperties; children: ReactEmailNode[] }
   | { type: 'Column'; style?: CSSProperties; children: ReactEmailNode[] }
   | { type: 'Text'; content: string; style?: CSSProperties }
@@ -23,7 +24,8 @@ export type ReactEmailNode =
       style?: CSSProperties;
       containerStyle?: CSSProperties;
     }
-  | { type: 'Hr'; style?: CSSProperties };
+  | { type: 'Hr'; style?: CSSProperties }
+  | { type: 'Spacer'; height: number };
 
 export interface FigmaReactEmailBlockProps {
   tree: ReactEmailNode;

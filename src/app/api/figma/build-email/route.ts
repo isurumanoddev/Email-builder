@@ -45,6 +45,7 @@ const buildEmailSchema = z.object({
   fileName: z.string().optional(),
   desktopUrl: z.string().optional(),
   mobileUrl: z.string().optional(),
+  mode: z.enum(['fidelity', 'primitives']).optional(),
 });
 
 export async function POST(request: Request) {
@@ -55,7 +56,11 @@ export async function POST(request: Request) {
     const { tree, warnings, nodeCount } = figmaToReactEmailTree(
       parsed.desktopNode,
       parsed.mobileNode,
-      { desktopUrl: parsed.desktopUrl, mobileUrl: parsed.mobileUrl }
+      {
+        desktopUrl: parsed.desktopUrl,
+        mobileUrl: parsed.mobileUrl,
+        mode: parsed.mode,
+      }
     );
 
     const block = {
@@ -86,7 +91,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       confidence: 1,
       blocks: [block],
-      reasoning: `Built pixel-accurate email from Figma frame "${parsed.nodeName}" (${nodeCount} React Email nodes).`,
+      reasoning:
+        parsed.mode === 'primitives'
+          ? `Built React Email primitives from Figma frame "${parsed.nodeName}" (${nodeCount} nodes).`
+          : `Built pixel-accurate email from Figma frame "${parsed.nodeName}" (${nodeCount} React Email nodes).`,
       previewHtml,
       warnings,
       nodeCount,

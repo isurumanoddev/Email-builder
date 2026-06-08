@@ -148,20 +148,78 @@ export function collectImageRefs(node: ParsedFigmaNode): string[] {
   return refs;
 }
 
+export function hasTextDescendant(node: ParsedFigmaNode): boolean {
+  if (node.type === 'TEXT' && node.text?.trim()) return true;
+  return node.children.some(hasTextDescendant);
+}
+
+export function findAllTextNodes(node: ParsedFigmaNode): ParsedFigmaNode[] {
+  const results: ParsedFigmaNode[] = [];
+  if (node.type === 'TEXT' && node.text?.trim()) {
+    results.push(node);
+  }
+  for (const child of node.children) {
+    results.push(...findAllTextNodes(child));
+  }
+  return results;
+}
+
+/** Pill-shaped control: short height + solid rounded fill (even when label text is vectorized). */
+export function hasButtonVisualStructure(node: ParsedFigmaNode, depth = 0): boolean {
+  if (depth > 6) return false;
+
+  const h = node.height ?? 0;
+  if (h > 0 && h >= 28 && h <= 120) {
+    const name = node.name.toLowerCase();
+    if (/button|cta|btn|primary|secondary|pill|action/.test(name)) return true;
+
+    for (const child of node.children) {
+      if (
+        (child.type === 'RECTANGLE' || child.type === 'FRAME') &&
+        normalizeColor(child.backgroundColor) &&
+        !child.imageRef
+      ) {
+        const ch = child.height ?? 0;
+        const radius = child.cornerRadius ?? 0;
+        if (ch >= h * 0.4 || radius >= 8) return true;
+      }
+    }
+  }
+
+  for (const child of node.children) {
+    if (child.type === 'FRAME' || child.type === 'INSTANCE' || child.type === 'COMPONENT' || child.type === 'GROUP') {
+      if (hasButtonVisualStructure(child, depth + 1)) return true;
+    }
+  }
+  return false;
+}
+
+export function hasButtonDescendant(node: ParsedFigmaNode): boolean {
+  if (hasButtonVisualStructure(node)) return true;
+  return node.children.some(hasButtonDescendant);
+}
+
 export function collectExportNodeIds(root: ParsedFigmaNode): string[] {
   const ids = new Set<string>();
 
   function walk(node: ParsedFigmaNode, depth: number) {
     if (!node.nodeId || !node.visible) return;
 
+    const hasText = hasTextDescendant(node);
+    const hasButtons = hasButtonDescendant(node);
     const hasImageFill = Boolean(node.imageRef);
     const isImageType = node.type === 'IMAGE' || (node.type === 'RECTANGLE' && hasImageFill);
 
     if (isImageType || RASTER_TYPES.has(node.type)) {
       ids.add(node.nodeId);
-    } else if (node.type === 'INSTANCE' && !findTextChild(node)) {
+    } else if (node.type === 'INSTANCE' && !hasText && !hasButtons) {
       ids.add(node.nodeId);
-    } else if (depth === 1 && (node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'INSTANCE')) {
+    } else if (
+      depth === 1 &&
+      (node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'INSTANCE') &&
+      !hasText &&
+      !hasButtons
+    ) {
       ids.add(node.nodeId);
     }
 
@@ -225,13 +283,21 @@ export function nodePath(node: ParsedFigmaNode, parentPath: string[] = []): stri
 }
 
 export function isBackgroundRect(child: ParsedFigmaNode, parent: ParsedFigmaNode): boolean {
-  if (child.type !== 'RECTANGLE' && child.type !== 'FRAME') return false;
   if (child.imageRef) return false;
-  if (!child.backgroundColor) return false;
-  if (child.children.some((c) => c.type === 'TEXT' && c.text)) return false;
+  if (!normalizeColor(child.backgroundColor)) return false;
 
   const name = child.name.toLowerCase();
-  if (/background|^bg$|fill|base|surface/.test(name)) return true;
+  if (/background|^bg$|base|surface/.test(name)) return true;
+
+  // Auto-layout button fills are full-size rectangles with rounded corners — not section backgrounds.
+  const hasSiblingText = parent.children.some(
+    (c) => c.id !== child.id && c.type === 'TEXT' && c.text
+  );
+  if (hasSiblingText && (child.cornerRadius ?? 0) >= 4) return false;
+  if (/button|cta|shape|pill/i.test(name)) return false;
+
+  // Only leaf fill rectangles count as decorative backgrounds — not content wrapper frames.
+  if (child.type !== 'RECTANGLE') return false;
 
   const wRatio = parent.width && child.width ? child.width / parent.width : 1;
   const hRatio = parent.height && child.height ? child.height / parent.height : 1;
@@ -304,7 +370,7 @@ export function tryMapCompositeButton(
     const height = node.height ?? shape.height ?? 0;
     const width = node.width ?? shape.width ?? 0;
 
-    if (nameMatch || (height > 0 && height <= 100 && width > 0 && width <= 480)) {
+    if (nameMatch || (height > 0 && height <= 100 && width > 0 && width <= 600)) {
       return { shape, text };
     }
   }
@@ -319,11 +385,29 @@ export function tryMapCompositeButton(
   return null;
 }
 
+export function normalizeColor(color?: string): string | undefined {
+  if (!color) return undefined;
+  const compact = color.replace(/\s/g, '').toLowerCase();
+  if (compact === 'rgba(0,0,0,0)' || compact === 'transparent') return undefined;
+  return color;
+}
+
 export function resolveEffectiveBackground(node: ParsedFigmaNode): string | undefined {
-  if (node.backgroundColor) return node.backgroundColor;
+  const direct = normalizeColor(node.backgroundColor);
+  if (direct) return direct;
 
   const bgChild = node.children.find((c) => isBackgroundRect(c, node));
-  return bgChild?.backgroundColor;
+  const fromChild = normalizeColor(bgChild?.backgroundColor);
+  if (fromChild) return fromChild;
+
+  for (const child of node.children) {
+    if (child.type === 'RECTANGLE' || child.type === 'FRAME') {
+      const nested = normalizeColor(child.backgroundColor);
+      if (nested && isBackgroundRect(child, node)) return nested;
+    }
+  }
+
+  return undefined;
 }
 
 export function getContentChildren(node: ParsedFigmaNode): ParsedFigmaNode[] {
@@ -347,18 +431,26 @@ export function findTextChild(node: ParsedFigmaNode): ParsedFigmaNode | undefine
 
 export function mapCounterAxisAlign(
   layoutMode: string | undefined,
-  counterAxisAlign: string | undefined
+  counterAxisAlign: string | undefined,
+  primaryAxisAlign?: string
 ): CSSProperties['textAlign'] {
-  if (!counterAxisAlign) return 'left';
-  const align = counterAxisAlign.toUpperCase();
+  const counter = counterAxisAlign?.toUpperCase();
+  const primary = primaryAxisAlign?.toUpperCase();
+
+  if (layoutMode === 'VERTICAL' || layoutMode === 'GRID') {
+    if (counter === 'CENTER') return 'center';
+    if (counter === 'MAX') return 'right';
+    if (counter === 'MIN') return 'left';
+  }
 
   if (layoutMode === 'HORIZONTAL') {
-    if (align === 'CENTER') return 'center';
-    if (align === 'MAX') return 'right';
+    if (primary === 'CENTER') return 'center';
+    if (primary === 'MAX') return 'right';
+    if (counter === 'CENTER') return 'center';
     return 'left';
   }
 
-  if (align === 'CENTER') return 'center';
-  if (align === 'MAX') return 'right';
+  if (counter === 'CENTER' || primary === 'CENTER') return 'center';
+  if (counter === 'MAX' || primary === 'MAX') return 'right';
   return 'left';
 }
