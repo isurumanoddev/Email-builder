@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AiImportModal } from '@/builder/components/AiImportModal';
-import { FigmaImportModal } from '@/builder/components/FigmaImportModal';
+import { FigmaBuildModal } from '@/builder/components/FigmaBuildModal';
+import { FigmaFetchModal } from '@/builder/components/FigmaFetchModal';
 import { useBuilderStore } from '@/builder/store/builderStore';
 import { downloadBlob } from '@/builder/utils/download';
 import { sanitizeExportName } from '@/lib/export/sanitizeName';
@@ -20,11 +21,13 @@ export function BuilderToolbar() {
   const updateTemplateInfo = useBuilderStore((s) => s.updateTemplateInfo);
   const setShowAdvanced = useBuilderStore((s) => s.setShowAdvanced);
   const save = useBuilderStore((s) => s.save);
+  const figmaSession = useBuilderStore((s) => s.figmaSession);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
   const [aiImportOpen, setAiImportOpen] = useState(false);
-  const [figmaImportOpen, setFigmaImportOpen] = useState(false);
+  const [figmaFetchOpen, setFigmaFetchOpen] = useState(false);
+  const [figmaBuildOpen, setFigmaBuildOpen] = useState(false);
 
   const handleDuplicate = async () => {
     if (!template) return;
@@ -126,10 +129,28 @@ export function BuilderToolbar() {
         <button
           type="button"
           className="btn btn-secondary btn-sm btn-figma"
-          onClick={() => setFigmaImportOpen(true)}
-          title="Import frames directly from Figma via URL"
+          onClick={() => setFigmaFetchOpen(true)}
+          title="Fetch design details from Figma via API"
         >
-          Figma Import
+          Fetch from Figma
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm btn-figma"
+          onClick={() => setFigmaBuildOpen(true)}
+          disabled={!figmaSession}
+          title={
+            figmaSession
+              ? `Build components from "${figmaSession.nodeName}"`
+              : 'Fetch a Figma frame first'
+          }
+        >
+          Build from Figma
+          {figmaSession && (
+            <span className="figma-session-badge" title={figmaSession.nodeName}>
+              ●
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -174,7 +195,19 @@ export function BuilderToolbar() {
         </button>
       </div>
 
-      <FigmaImportModal open={figmaImportOpen} onClose={() => setFigmaImportOpen(false)} />
+      <FigmaFetchModal
+        open={figmaFetchOpen}
+        onClose={() => setFigmaFetchOpen(false)}
+        onFetchComplete={() => setFigmaBuildOpen(true)}
+      />
+      <FigmaBuildModal
+        open={figmaBuildOpen}
+        onClose={() => setFigmaBuildOpen(false)}
+        onFetchAgain={() => {
+          setFigmaBuildOpen(false);
+          setFigmaFetchOpen(true);
+        }}
+      />
       <AiImportModal open={aiImportOpen} onClose={() => setAiImportOpen(false)} />
     </header>
   );

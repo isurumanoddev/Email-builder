@@ -3,6 +3,7 @@ import type { EmailTemplateDocument, EmailTemplateMeta, TemplateBlock } from '@/
 import type { ComponentRegistryEntry } from '@/lib/registry/types';
 import { generateId } from '@/lib/utils/id';
 import { setNestedValue } from '@/builder/utils/props';
+import type { FigmaSession } from '@/builder/types/figmaSession';
 
 interface BuilderState {
   template: EmailTemplateDocument | null;
@@ -10,6 +11,7 @@ interface BuilderState {
   registryByCategory: Record<string, ComponentRegistryEntry[]>;
   paletteByCategory: Record<string, ComponentRegistryEntry[]>;
   selectedBlockId: string | null;
+  figmaSession: FigmaSession | null;
   isDirty: boolean;
   isSaving: boolean;
   isLoading: boolean;
@@ -19,6 +21,9 @@ interface BuilderState {
   saveMessage: string | null;
 
   setTemplate: (template: EmailTemplateDocument) => void;
+  setFigmaSession: (session: FigmaSession | null) => void;
+  clearFigmaSession: () => void;
+  updateFigmaHint: (hint: string) => void;
   loadRegistry: () => Promise<void>;
   loadTemplate: (id: string) => Promise<void>;
   selectBlock: (id: string | null) => void;
@@ -57,6 +62,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   registryByCategory: {},
   paletteByCategory: {},
   selectedBlockId: null,
+  figmaSession: null,
   isDirty: false,
   isSaving: false,
   isLoading: false,
@@ -67,6 +73,21 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   setTemplate: (template) =>
     set({ template, isDirty: false, selectedBlockId: null, saveError: null, saveMessage: null }),
+
+  setFigmaSession: (session) => set({ figmaSession: session }),
+
+  clearFigmaSession: () => set({ figmaSession: null }),
+
+  updateFigmaHint: (hint) => {
+    const { figmaSession } = get();
+    if (!figmaSession) return;
+    set({
+      figmaSession: {
+        ...figmaSession,
+        hint: hint.trim() || undefined,
+      },
+    });
+  },
 
   loadRegistry: async () => {
     const res = await fetch('/api/registry');

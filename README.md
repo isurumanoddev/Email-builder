@@ -63,6 +63,29 @@ npm run email:dev
 
 This starts the React Email preview at `http://localhost:3001`.
 
+#### Step 5: (Optional) Local AI for Figma → component build
+
+The builder can map Figma frames to email components using a **free local vision model** via [Ollama](https://ollama.com):
+
+1. Install Ollama and start it (runs on `http://localhost:11434`).
+2. Pull a vision model:
+
+```bash
+ollama pull llava
+```
+
+For lower RAM, use `ollama pull moondream` and set `OLLAMA_VISION_MODEL=moondream` in `.env.local`.
+
+3. Copy `.env.example` to `.env.local` and set:
+
+```env
+AI_PROVIDER=ollama
+OLLAMA_VISION_MODEL=llava
+FIGMA_ACCESS_TOKEN=your_figma_token
+```
+
+In the builder: **Fetch from Figma** → **Build from Figma** (uses Ollama + Figma API design context).
+
 ---
 
 ## 📁 Project Structure
