@@ -84,14 +84,16 @@ function textStyle(
   node: ParsedFigmaNode,
   align?: CSSProperties['textAlign']
 ): CSSProperties {
+  const fs = node.fontSize ?? 16;
   return {
     color: node.color ?? '#000000',
-    fontSize: node.fontSize ?? 16,
+    fontSize: `${fs}px`,
     fontWeight: node.fontWeight ?? 400,
     textAlign: (node.textAlign as CSSProperties['textAlign']) ?? align ?? 'left',
     fontFamily: fontFamily(node),
     margin: 0,
-    lineHeight: node.lineHeight ? `${node.lineHeight}px` : '1.5',
+    padding: 0,
+    lineHeight: node.lineHeight ? `${node.lineHeight}px` : `${Math.round(fs * 1.5)}px`,
     letterSpacing: node.letterSpacing ? `${node.letterSpacing}px` : undefined,
     whiteSpace: 'pre-line',
   };
@@ -166,29 +168,34 @@ function isCtaPhrase(text: string): boolean {
   ) || (t.length <= 40 && /see all offers|request a quote/i.test(t));
 }
 
-/** Find the solid-fill shape inside a button component. */
+/** Find the solid-fill shape inside a button component (prefer largest colored fill). */
 function findButtonFill(node: ParsedFigmaNode, depth = 0): ParsedFigmaNode | undefined {
-  if (depth > 5) return undefined;
+  if (depth > 6) return undefined;
 
-  for (const child of node.children) {
-    if (
-      (child.type === 'RECTANGLE' || child.type === 'FRAME') &&
-      normalizeColor(child.backgroundColor) &&
-      !child.imageRef
-    ) {
-      const nh = node.height ?? 0;
-      const ch = child.height ?? 0;
-      if (nh === 0 || ch >= nh * 0.4) return child;
+  const candidates: ParsedFigmaNode[] = [];
+
+  function collect(n: ParsedFigmaNode, d: number) {
+    if (d > 6) return;
+    for (const child of n.children) {
+      if (
+        (child.type === 'RECTANGLE' || child.type === 'FRAME') &&
+        normalizeColor(child.backgroundColor) &&
+        !child.imageRef
+      ) {
+        const nh = node.height ?? 0;
+        const ch = child.height ?? 0;
+        if (nh === 0 || ch >= nh * 0.35) candidates.push(child);
+      }
+      if (CONTAINER_TYPES.has(child.type)) collect(child, d + 1);
     }
   }
 
-  for (const child of node.children) {
-    if (CONTAINER_TYPES.has(child.type)) {
-      const nested = findButtonFill(child, depth + 1);
-      if (nested) return nested;
-    }
-  }
-  return undefined;
+  collect(node, depth);
+  if (candidates.length === 0) return undefined;
+
+  return candidates.sort(
+    (a, b) => (b.width ?? 0) * (b.height ?? 0) - (a.width ?? 0) * (a.height ?? 0)
+  )[0];
 }
 
 /** Collect short label text(s) from a button node (label + arrow icon text). */
@@ -283,10 +290,9 @@ function isLayoutGroup(node: ParsedFigmaNode): boolean {
 
 function mapText(
   node: ParsedFigmaNode,
-  align?: CSSProperties['textAlign'],
-  content?: string
+  align?: CSSProperties['textAlign']
 ): ReactEmailNode {
-  const text = content ?? node.text ?? '';
+  const text = node.text ?? '';
   const style = textStyle(node, align);
 
   if (isHeading(node)) {
@@ -294,28 +300,21 @@ function mapText(
       type: 'Heading',
       content: text,
       as: headingLevel(node),
-      style: { ...style, margin: '0 0 20px 0' },
+      style,
     };
   }
   return {
     type: 'Text',
     content: text,
-    style: { ...style, margin: '0 0 16px 0' },
+    style,
   };
 }
 
-function splitParagraphs(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): ReactEmailNode[] {
-  const raw = node.text ?? '';
-  const parts = raw.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-  if (parts.length <= 1) return [mapText(node, align)];
-
-  return parts.map((part, i) => {
-    const mapped = mapText(node, align, part);
-    if (i > 0 && (mapped.type === 'Text' || mapped.type === 'Heading')) {
-      return { ...mapped, style: { ...mapped.style, marginTop: 8 } };
-    }
-    return mapped;
-  });
+function mapTextNode(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): ReactEmailNode[] {
+  if (node.type === 'TEXT' && node.text?.trim() && isCtaPhrase(node.text)) {
+    return [mapButton(node, align)];
+  }
+  return [mapText(node, align)];
 }
 
 function mapButton(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): ReactEmailNode {
@@ -326,15 +325,26 @@ function mapButton(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): R
 
   const bg =
     normalizeColor(fill?.backgroundColor) ??
-    normalizeColor(node.backgroundColor) ??
-    (/quote/i.test(label) ? '#ffffff' : '#c3002f');
+    normalizeColor(node.backgroundColor);
 
-  const textColor = primaryText?.color ?? (bg === '#ffffff' || bg === '#fff' ? '#000000' : '#ffffff');
+  const textColor = primaryText?.color ?? '#ffffff';
   const radius = fill?.cornerRadius ?? node.cornerRadius ?? 0;
-  const pillRadius = radius >= 8 ? 999 : Math.max(radius, 4);
+  const pillRadius = radius >= 8 ? 999 : Math.max(radius, 0);
   const fw = primaryText?.fontWeight ?? 700;
   const fs = primaryText?.fontSize ?? 14;
   const textAlign = align ?? nodeTextAlign(node) ?? 'center';
+
+  const pt = node.paddingTop ?? fill?.paddingTop ?? 0;
+  const pr = node.paddingRight ?? fill?.paddingRight ?? 0;
+  const pb = node.paddingBottom ?? fill?.paddingBottom ?? 0;
+  const pl = node.paddingLeft ?? fill?.paddingLeft ?? 0;
+  const btnH = node.height ?? fill?.height ?? 0;
+  const verticalPad =
+    pt || pb
+      ? `${pt || 14}px ${pr || 28}px ${pb || 14}px ${pl || 28}px`
+      : btnH > 0
+        ? `${Math.max(12, Math.round((btnH - fs) / 2))}px ${pr || 28}px`
+        : '14px 28px';
 
   return {
     type: 'Button',
@@ -343,18 +353,20 @@ function mapButton(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): R
     containerStyle: {
       textAlign,
       width: '100%',
-      paddingTop: 8,
-      paddingBottom: 4,
+      margin: 0,
+      padding: 0,
     },
     style: {
       backgroundColor: bg,
       color: textColor,
       borderRadius: pillRadius,
       fontFamily: fontFamily(primaryText ?? node),
-      fontSize: fs,
+      fontSize: `${fs}px`,
       fontWeight: fw,
-      lineHeight: primaryText?.lineHeight ? `${primaryText.lineHeight}px` : '1.2',
-      padding: '16px 32px',
+      lineHeight: primaryText?.lineHeight
+        ? `${primaryText.lineHeight}px`
+        : `${Math.round(fs * 1.2)}px`,
+      padding: verticalPad,
       textAlign: 'center',
       textTransform: label === label.toUpperCase() && /[A-Z]/.test(label) ? 'uppercase' : undefined,
       textDecoration: 'none',
@@ -362,6 +374,7 @@ function mapButton(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): R
       maxWidth: '100%',
       display: 'inline-block',
       boxSizing: 'border-box',
+      margin: 0,
     },
   };
 }
@@ -379,12 +392,15 @@ function mapImage(node: ParsedFigmaNode): ReactEmailNode | null {
   };
 }
 
-function applyGap(children: ReactEmailNode[], gap?: number): ReactEmailNode[] {
-  if (!gap || gap <= 0 || children.length <= 1) return children;
+/** Insert spacers only between direct Figma child groups — not inside split text runs. */
+function interleaveChildGaps(
+  childGroups: ReactEmailNode[][],
+  gap?: number
+): ReactEmailNode[] {
   const out: ReactEmailNode[] = [];
-  for (let i = 0; i < children.length; i++) {
-    if (i > 0) out.push({ type: 'Spacer', height: gap });
-    out.push(children[i]);
+  for (let i = 0; i < childGroups.length; i++) {
+    if (i > 0 && gap && gap > 0) out.push({ type: 'Spacer', height: gap });
+    out.push(...childGroups[i]);
   }
   return out;
 }
@@ -399,20 +415,19 @@ function mapNode(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): Rea
 
   // 1. Plain text
   if (node.type === 'TEXT' && node.text?.trim()) {
-    if (isCtaPhrase(node.text)) return [mapButton(node, effectiveAlign)];
-    return splitParagraphs(node, effectiveAlign);
+    return mapTextNode(node, effectiveAlign);
   }
 
   // 2. CTA stack — always emit one React Email Button per child
   if (isCtaButtonStack(node)) {
     const kids = getContentChildren(node);
-    const mapped = kids.flatMap((child) => {
+    const groups = kids.map((child) => {
       if (isButtonNode(child) || hasButtonVisualStructure(child)) {
         return [mapButton(child, effectiveAlign)];
       }
       return mapNode(child, effectiveAlign);
     });
-    return applyGap(mapped, node.gap);
+    return interleaveChildGaps(groups, node.gap);
   }
 
   // 3. Button component
@@ -429,21 +444,21 @@ function mapNode(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): Rea
   if (/^cta$|cta.?group|cta.?stack|buttons?|actions?/.test(nodeName)) {
     const kids = getContentChildren(node);
     if (kids.length > 0) {
-      const mapped = kids.flatMap((child) => {
+      const groups = kids.map((child) => {
         if (isButtonNode(child) || hasButtonVisualStructure(child)) {
           return [mapButton(child, effectiveAlign)];
         }
         return mapNode(child, effectiveAlign);
       });
-      return applyGap(mapped, node.gap);
+      return interleaveChildGaps(groups, node.gap);
     }
   }
 
   // 6. Layout group — flatten children in Figma order
   if (isLayoutGroup(node)) {
     const kids = getContentChildren(node);
-    const mapped = kids.flatMap((child) => mapNode(child, effectiveAlign));
-    return applyGap(mapped, node.gap);
+    const groups = kids.map((child) => mapNode(child, effectiveAlign));
+    return interleaveChildGaps(groups, node.gap);
   }
 
   // 7. Horizontal row
@@ -468,10 +483,8 @@ function mapNode(node: ParsedFigmaNode, align?: CSSProperties['textAlign']): Rea
   // 8. Recurse into children
   const kids = getContentChildren(node);
   if (kids.length > 0) {
-    return applyGap(
-      kids.flatMap((child) => mapNode(child, effectiveAlign)),
-      node.gap
-    );
+    const groups = kids.map((child) => mapNode(child, effectiveAlign));
+    return interleaveChildGaps(groups, node.gap);
   }
 
   return [];

@@ -95,8 +95,10 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
         <Text
           key={key}
           style={{
-            fontFamily: EMAIL_FONT,
+            margin: 0,
+            padding: 0,
             whiteSpace: 'pre-line',
+            fontFamily: EMAIL_FONT,
             ...node.style,
           }}
         >
@@ -110,9 +112,10 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
           key={key}
           as={node.as ?? 'h2'}
           style={{
-            fontFamily: EMAIL_FONT,
+            margin: 0,
+            padding: 0,
             whiteSpace: 'pre-line',
-            lineHeight: '1.2',
+            fontFamily: EMAIL_FONT,
             ...node.style,
           }}
         >
@@ -186,12 +189,13 @@ function renderNode(node: ReactEmailNode, key: string): React.ReactNode {
             <Button
               href={node.href}
               style={{
-                fontFamily: EMAIL_FONT,
+                margin: 0,
                 display: 'inline-block',
                 textDecoration: 'none',
                 textAlign: 'center' as const,
                 boxSizing: 'border-box',
                 maxWidth: '100%',
+                fontFamily: EMAIL_FONT,
                 ...node.style,
               }}
             >

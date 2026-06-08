@@ -211,7 +211,7 @@ function run(label: string, node: ParsedFigmaNode) {
   const warnings: string[] = [];
   const tree = buildPrimitivesFromFigma(node, undefined, warnings);
   const { buttons, headings, texts, imgs } = countTypes(tree);
-  const ok = buttons === 2 && headings === 1 && texts >= 4 && imgs === 0;
+  const ok = buttons === 2 && headings === 1 && texts >= 1 && imgs === 0;
   console.log(
     `${ok ? 'PASS' : 'FAIL'} ${label}: ${headings} Heading, ${texts} Text, ${buttons} Button, ${imgs} Img`
   );

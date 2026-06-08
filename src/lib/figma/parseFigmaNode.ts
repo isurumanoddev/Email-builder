@@ -20,6 +20,7 @@ export interface ParsedFigmaNode {
   fontFamily?: string;
   lineHeight?: number;
   letterSpacing?: number;
+  paragraphSpacing?: number;
   textAlign?: string;
   color?: string;
   backgroundColor?: string;
@@ -61,6 +62,7 @@ function extractTextStyle(
   fontFamily?: string;
   lineHeight?: number;
   letterSpacing?: number;
+  paragraphSpacing?: number;
   textAlign?: string;
   color?: string;
 } {
@@ -70,17 +72,30 @@ function extractTextStyle(
         fontWeight?: number;
         fontFamily?: string;
         lineHeightPx?: number;
+        lineHeightPercentFontSize?: number;
+        lineHeightUnit?: string;
         letterSpacing?: number;
+        paragraphSpacing?: number;
         textAlignHorizontal?: string;
       }
     | undefined;
+
+  let lineHeight = style?.lineHeightPx;
+  if (
+    lineHeight == null &&
+    style?.lineHeightPercentFontSize != null &&
+    style.fontSize
+  ) {
+    lineHeight = Math.round((style.lineHeightPercentFontSize / 100) * style.fontSize);
+  }
 
   return {
     fontSize: style?.fontSize,
     fontWeight: style?.fontWeight,
     fontFamily: style?.fontFamily,
-    lineHeight: style?.lineHeightPx,
+    lineHeight,
     letterSpacing: style?.letterSpacing,
+    paragraphSpacing: style?.paragraphSpacing,
     textAlign: style?.textAlignHorizontal?.toLowerCase(),
     color: extractTextColor(node, variables),
   };
@@ -112,6 +127,7 @@ export function parseFigmaNode(
     fontFamily: textStyle.fontFamily,
     lineHeight: textStyle.lineHeight,
     letterSpacing: textStyle.letterSpacing,
+    paragraphSpacing: textStyle.paragraphSpacing,
     textAlign: textStyle.textAlign,
     color: textStyle.color,
     backgroundColor: extractBackgroundColor(node, variables),
