@@ -156,9 +156,9 @@ export function BuilderToolbar() {
           type="button"
           className="btn btn-secondary btn-sm"
           onClick={() => setAiImportOpen(true)}
-          title="Upload screenshots to generate components with AI"
+          title="Upload screenshots to generate email components"
         >
-          AI Import
+          Screenshot Upload
         </button>
         <a
           href="http://localhost:3005"

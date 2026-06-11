@@ -84,7 +84,7 @@ function normalizeBlockProps(
 function buildImageFallbackBlock(desktopUrl: string, mobileUrl?: string): AiBlock {
   return {
     componentId: 'image-block',
-    label: 'AI Import (Image)',
+    label: 'Screenshot Upload (Image)',
     props: {
       imgSrc: desktopUrl,
       mobileSrc: mobileUrl ?? desktopUrl,

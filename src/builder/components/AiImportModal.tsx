@@ -89,13 +89,13 @@ export function AiImportModal({ open, onClose }: AiImportModalProps) {
         className="import-modal import-modal-ai"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-labelledby="ai-import-title"
+        aria-labelledby="screenshot-upload-title"
         aria-modal="true"
       >
         <div className="import-modal-header">
           <div>
-            <h2 id="ai-import-title">AI Import</h2>
-            <p className="import-modal-subtitle">Upload screenshots — AI maps them to email components</p>
+            <h2 id="screenshot-upload-title">Screenshot Upload</h2>
+            <p className="import-modal-subtitle">Upload screenshots to map them to email components</p>
           </div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={handleClose}>
             ✕

@@ -525,7 +525,7 @@
   }
 }
 
-/* AI Import modal & upload */
+/* Screenshot Upload modal & upload */
 .ai-upload-field {
   display: flex;
   flex-direction: column;
@@ -853,7 +853,7 @@
   object-fit: contain;
 }
 
-/* ── Shared import modals (AI Import + Figma Import) ── */
+/* ── Shared import modals (Screenshot Upload + Figma Import) ── */
 
 .import-modal-overlay {
   position: fixed;
